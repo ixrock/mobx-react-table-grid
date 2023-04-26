@@ -1,5 +1,5 @@
 import { action, computed, observable } from "mobx"
-import type { TableColumnId, TableDataColumn, TableDataRow } from "./table-index";
+import type { TableColumnId, TableDataColumn, TableDataRow } from "./index";
 import orderBy from "lodash/orderBy";
 
 export interface CreateTableStateParams<ResourceItem = any> {

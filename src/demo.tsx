@@ -3,7 +3,7 @@ import React from "react";
 import ReactDOM from "react-dom";
 import { inject, observer } from "mobx-react"
 import { action, observable } from "mobx"
-import { CreateTableState, createTableState, Table } from "./table/table-index";
+import { CreateTableState, createTableState, Table } from "./table";
 import { makeData, renderContainers, renderStatus, ResourceColumnId, ResourceStub } from "./make-data";
 
 export const tableState = createTableState<ResourceStub>({
