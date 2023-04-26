@@ -1,0 +1,142 @@
+/**
+ Tables 2.0 (grid) implementation based on `display:grid` spec.
+ Read more: https://developer.mozilla.org/en-US/docs/Web/CSS/CSS_Grid_Layout
+*/
+
+.table {
+  --grid-col-size: minmax(50px, 1fr);
+  --grid-spacing: var(--grid-gap, 8px);
+
+  position: relative;
+  display: grid;
+  grid-template-columns: var(--grid-cols);
+  gap: var(--grid-gap);
+  flex: 1;
+  height: var(--grid-height);
+  width: 100%;
+  align-content: start;
+  justify-items: stretch;
+  overflow: auto;
+  overflow: overlay;
+}
+
+/* max possible scroll-height calculated by rows virtualizer */
+.table::before {
+  height: var(--grid-virtual-max-height);
+  position: absolute;
+  width: 1px;
+  left: 0;
+  top: 0;
+  content: "";
+}
+
+.header {
+  width: inherit;
+  height: min-content;
+  grid-column: 1 / -1; /* merge contents for all columns within a row */
+  text-align: center;
+  background: rgba(0, 0, 0, .75);
+  padding: var(--grid-spacing);
+  z-index: 1;
+}
+
+.row:not(.header) {
+  /* display: contents; // ignore element in the DOM layout and use it's children in parent css-grid */
+  grid-column: 1 / -1; /* merge all columns for parent's table grid */
+  display: grid; /* ignore element as direct css-grid child */
+  grid-template-columns: inherit;
+  transition: background-color ease-in-out .35s;
+  align-items: center;
+
+  /* TODO: use with `src/hooks/useVirtualization.tsx`  */
+  &[data-intersection="hidden"] {
+    background: rgba(255, 0, 0, .1);
+  }
+
+  &:not(.thead):hover {
+    cursor: pointer;
+    background: #000000aa;
+  }
+}
+
+.column {
+  padding: var(--grid-spacing);
+
+  .title {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    flex: 1 0;
+  }
+}
+
+.thead {
+  position: sticky;
+  top: 0; /* offset from top when parent element is scrolled */
+  z-index: 1;
+  background: rgba(255, 255, 255, .9);
+  color: #000;
+  height: min-content;
+  align-items: center;
+
+  > .column {
+    position: relative;
+    display: flex;
+    user-select: none;
+    overflow: visible;
+
+    &:hover {
+      .resizable {
+        border-right-width: var(--grid-resizer, 1px);
+        padding-right: var(--grid-resizer-width, 20px); /* add invisible extra space to grab resizer */
+      }
+    }
+  }
+
+  &:empty {
+    display: none !important;
+  }
+}
+
+.sortable {
+  cursor: pointer;
+  transition: background-color .5s ease-out;
+
+  &:hover {
+    background: silver;
+  }
+}
+
+.arrowUp {
+  margin: auto 3px;
+  width: 0;
+  height: 0;
+  border-style: solid;
+  border-width: 0 5px 8.7px 5px;
+  border-color: transparent transparent currentColor transparent;
+}
+
+.arrowDown {
+  margin: auto 3px;
+  width: 0;
+  height: 0;
+  border-style: solid;
+  border-width: 8.7px 5px 0 5px;
+  border-color: currentColor transparent transparent transparent;
+}
+
+.resizable {
+  position: absolute;
+  top: 0;
+  right: 0;
+  height: var(--grid-virtual-max-height, 100%);
+  border-right: 0 solid var(--grid-resizer-color, #ffffff90);
+  cursor: col-resize;
+  transition: border .15s;
+  box-sizing: content-box;
+  padding-right: 0;
+}
+
+/* TODO: handle resize & reordering columns with D&D external lib */
+.draggable {
+
+}
