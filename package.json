@@ -11,7 +11,6 @@
     "type": "git",
     "url": "git+https://github.com/ixrock/mobx-react-table-grid.git"
   },
-  "author": "Roman",
   "bugs": {
     "url": "https://github.com/ixrock/mobx-react-table-grid/issues"
   },
@@ -39,6 +38,8 @@
     "mobx": "^6.9.0",
     "mobx-react": "^7.6.0",
     "react": "^17 || ^18",
-    "react-dom": "^17 || ^18"
+    "react-dom": "^17 || ^18",
+    "react-dnd": "^15",
+    "react-dnd-html5-backend": "^15"
   }
 }

@@ -73,7 +73,6 @@
   position: sticky;
   top: 0; /* offset from top when parent element is scrolled */
   z-index: 1;
-  background: rgba(255, 255, 255, .9);
   color: #000;
   height: min-content;
   align-items: center;
@@ -83,6 +82,8 @@
     display: flex;
     user-select: none;
     overflow: visible;
+    background: rgba(255, 255, 255, .9);
+    transition: opacity ease-out 250ms;
 
     &:hover {
       .resizable {
@@ -136,7 +137,19 @@
   padding-right: 0;
 }
 
-/* TODO: handle resize & reordering columns with D&D external lib */
 .draggable {
-
 }
+
+.isDragging {
+  pointer-events: none;
+}
+
+.isDroppable {
+  opacity: .75;
+  filter: blur(50%);
+}
+
+.isDraggingOverActiveDroppable {
+  opacity: 1;
+}
+

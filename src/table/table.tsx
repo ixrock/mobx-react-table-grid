@@ -4,6 +4,8 @@ import { observer } from "mobx-react"
 import { useVirtualizer } from "@tanstack/react-virtual";
 import { TableDataRow, TableRow } from "./table-row";
 import type { TableDataColumn } from "./table-column";
+import { DndProvider } from "react-dnd";
+import { HTML5Backend } from "react-dnd-html5-backend";
 
 export interface TableProps<DataItem = any> {
   className?: string;
@@ -73,37 +75,39 @@ export const Table = observer((props: TableProps) => {
   } as React.CSSProperties;
 
   return (
-    <div className={`${styles.table} ${className}`} style={cssVars} ref={tableElemRef}>
-      {header && (
-        <TableRow id="header" className={styles.header} title={header} data={null}/>
-      )}
-      <TableRow
-        id="thead"
-        className={styles.thead}
-        columns={columns}
-        data={null}
-      />
-      {rowVirtualizer.getVirtualItems().map(virtualRow => {
-        const row = rows[virtualRow.index];
-        return (
-          <TableRow
-            key={virtualRow.key}
-            id={virtualRow.key}
-            index={virtualRow.index}
-            className={`${styles.row} ${row.className ?? ""}`}
-            data={row.data}
-            columns={row.columns}
-            style={{
-              ...row.style,
-              position: "absolute",
-              top: virtualRow.start,
-              height: virtualRow.size,
-              width: "100%",
-              overflow: "hidden"
-            }}
-          />
-        );
-      })}
-    </div>
+    <DndProvider backend={HTML5Backend}>
+      <div className={`${styles.table} ${className}`} style={cssVars} ref={tableElemRef}>
+        {header && (
+          <TableRow id="header" className={styles.header} title={header} data={null}/>
+        )}
+        <TableRow
+          id="thead"
+          className={styles.thead}
+          columns={columns}
+          data={null}
+        />
+        {rowVirtualizer.getVirtualItems().map(virtualRow => {
+          const row = rows[virtualRow.index];
+          return (
+            <TableRow
+              key={virtualRow.key}
+              id={virtualRow.key}
+              index={virtualRow.index}
+              className={`${styles.row} ${row.className ?? ""}`}
+              data={row.data}
+              columns={row.columns}
+              style={{
+                ...row.style,
+                position: "absolute",
+                top: virtualRow.start,
+                height: virtualRow.size,
+                width: "100%",
+                overflow: "hidden"
+              }}
+            />
+          );
+        })}
+      </div>
+    </DndProvider>
   )
 });

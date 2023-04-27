@@ -15,7 +15,7 @@ export function createTableState<DataItem = any>({ headingColumns, dataItems }: 
       // copy heading columns definition
       ...headColumn,
 
-      // adding sorting ability to columns
+      // sorting columns state handling
       get sortingOrder() {
         return sortedColumns.get(headColumn.id);
       },
@@ -25,19 +25,35 @@ export function createTableState<DataItem = any>({ headingColumns, dataItems }: 
         if (order === "asc") sortedColumns.set(column.id, "desc");
         if (order === "desc") sortedColumns.delete(column.id);
       }),
-
-      // adding resizing columns ability
+      // re-ordering columns state handling
+      onDragAndDrop: action(({ draggable, droppable }) => {
+        const currentOrder = columnsOrder.length ? [...columnsOrder] : tableColumnsAll.map(column => column.id);
+        const dragIndex = currentOrder.indexOf(draggable.id);
+        const dropIndex = currentOrder.indexOf(droppable.id);
+        const firstItem = currentOrder[dragIndex];
+        currentOrder[dragIndex] = currentOrder[dropIndex];
+        currentOrder[dropIndex] = firstItem;
+        columnsOrder.replace(currentOrder);
+      }),
+      // resizing columns state handling
       onResizeStart: action((row, column, evt) => {
-        console.log("[RESIZE]:", row, column, evt)
+        console.log("[RESIZE]:", row, column, evt);
       }),
     }
   });
 
   const hiddenColumns = observable.set<TableColumnId>();
   const sortedColumns = observable.map<TableColumnId, "asc" | "desc">();
+  const columnsOrder = observable.array<TableColumnId>(); // could be reordered by d&d
 
   const tableColumns = computed<TableDataColumn[]>(() => {
-    return tableColumnsAll.filter(col => !hiddenColumns.has(col.id));
+    if (columnsOrder.length) {
+      return columnsOrder
+        .map(columnId => tableColumnsAll.find(column => column.id === columnId))
+        .filter(col => !hiddenColumns.has(col.id));
+    } else {
+      return tableColumnsAll.filter(col => !hiddenColumns.has(col.id));
+    }
   });
 
   const tableRows = computed<TableDataRow[]>(() => {
