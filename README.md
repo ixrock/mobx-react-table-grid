@@ -25,7 +25,7 @@ npm run dev
 ```tsx
 import { observable } from "mobx"
 import { inject, observer } from "mobx-react"
-import { createTableState, Table } from "./table-index";
+import { createTableState, Table } from "./src/table";
 
 interface MyTableGridDataItem {
   name: string

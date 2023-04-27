@@ -3,21 +3,55 @@ import React from "react";
 import { observer } from "mobx-react"
 import type { TableDataRow } from "./table-row";
 
+/**
+ * Unique ID for every column in grid
+ */
 export type TableColumnId = string;
 
 export interface TableDataColumn<DataItem = any> {
   id: TableColumnId;
+  title: React.ReactNode;
   className?: string;
-  title?: React.ReactNode;
   style?: React.CSSProperties;
-  resizable?: boolean; // default: true, defines if specific column could be resized by `width`
-  draggable?: boolean; // default: true, defines if specific column could be re-ordered within parent table
-  sortable?: boolean; // default: true, defines if specific column could be used in sorting results
-  sortingOrder?: "asc" | "desc"; // current order in sorting results
+  /**
+   * Defines if specific column could be resized by `width`
+   * default: true
+   */
+  resizable?: boolean;
+  /**
+   * Defines if specific column could be re-ordered within parent table
+   * @default: true
+   */
+  draggable?: boolean;
+  /**
+   * Defines if specific column could be used in sorting results
+   * @default: true
+   */
+  sortable?: boolean;
+  /**
+   * Current state of ordering items in sorting results (if any)
+   */
+  sortingOrder?: "asc" | "desc";
+  /**
+   * Callback to be used in data sorting items in every row and column
+   * By default, if this `data-getter` is not provided `renderValue(): ReactNode` would be used instead.
+   * NOTE: sorting doesn't work correctly if `renderValue()` returns not a `string` or `number`.
+   */
   sortValue?: (row: TableDataRow<DataItem>, col: TableDataColumn<DataItem>) => string | number,
-  renderValue?: (row: TableDataRow<DataItem>, col: TableDataColumn<DataItem>) => React.ReactNode;
+  /**
+   * This `data-getter` called when some column sorted by user action (UI event)
+   * Usually this is a good place to update some external state for the table.
+   */
   onSorting?: (row: TableDataRow<DataItem>, col: TableDataColumn<DataItem>, evt: React.MouseEvent) => void;
+  /**
+   * This `data-getter` called when some column is `resizable` and resizing event is just started by user action (UI event)
+   * Usually this is a good place to update some external state for the table.
+   */
   onResizeStart?: (row: TableDataRow<DataItem>, col: TableDataColumn<DataItem>, evt: React.MouseEvent) => void;
+  /**
+   * Callback to be used in rendering contents in every column (aka "data cell")
+   */
+  renderValue: (row: TableDataRow<DataItem>, col: TableDataColumn<DataItem>) => React.ReactNode;
 }
 
 interface TableColumnProps extends TableDataColumn {

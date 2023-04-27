@@ -8,12 +8,40 @@ import type { TableDataColumn } from "./table-column";
 export interface TableProps<DataItem = any> {
   className?: string;
   style?: React.CSSProperties;
+  /**
+   * Table's header html block.
+   * Scrolled with table items behind heading columns.
+   */
   header?: React.ReactNode;
-  columns?: TableDataColumn<DataItem>[]; // heading columns with names
-  rows?: TableDataRow<DataItem>[]; // data rows with inner columns
-  paddingStart?: number; // usually it's should be `header.offsetHeight` (works together with `props.header`)
-  rowSize?: number; // default: 50px, max expected row's height
-  overscan?: number; // default: 10 (extra items for creating as virtual rows within scrollable area viewpoint)
+  /**
+   * Heading columns definition within the grid (aka <thead>-s but in data-terms).
+   * This outputs floating html block that stays always on the top of scrolled items list (`position: sticky`)
+   */
+  columns: TableDataColumn<DataItem>[];
+  /**
+   * Data rows with required columns.
+   * All the columns inside extended from "heading" `props.columns` and has all the `data-getters`
+   * and callbacks required for specific columns to handle the data item (e.g. sort, display, etc)
+   * Usually `props.rows` needs to be generated with some items list and used above `props.columns`
+   */
+  rows: TableDataRow<DataItem>[];
+  /**
+   * Usually it's should be the same as `props.header.offsetHeight` (when provided)
+   * @dependencies of `@tanstack/react-virtual`
+   */
+  paddingStart?: number;
+  /**
+   * Max expected row's height. Currently, all rows has that fixed size.
+   * @dependencies of `@tanstack/react-virtual`
+   * @default: 50
+   */
+  rowSize?: number;
+  /**
+   * Extra items for creating as virtual rows within scrollable area of viewpoint (table)
+   * @default: 10
+   * @dependencies of `@tanstack/react-virtual`
+   */
+  overscan?: number;
 }
 
 export const Table = observer((props: TableProps) => {
@@ -24,7 +52,7 @@ export const Table = observer((props: TableProps) => {
     paddingStart = 0,
     rowSize = 50,
     overscan = 10,
-    header,
+    header = null,
     rows = [],
     columns = [],
   } = props;

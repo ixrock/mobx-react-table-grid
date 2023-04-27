@@ -27,9 +27,9 @@ export function createTableState<DataItem = any>({ headingColumns, dataItems }: 
       }),
 
       // adding resizing columns ability
-      onResizeStart(row, column, evt) {
+      onResizeStart: action((row, column, evt) => {
         console.log("[RESIZE]:", row, column, evt)
-      }
+      }),
     }
   });
 
@@ -49,8 +49,7 @@ export function createTableState<DataItem = any>({ headingColumns, dataItems }: 
         data: resource,
         columns: tableColumns.get().map(column => {
           return {
-            id: column.id,
-            className: column.className,
+            ...column,
             get title() {
               return column.renderValue?.(row, column)
             },
