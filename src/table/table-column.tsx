@@ -17,6 +17,10 @@ export interface TableDataColumn<DataItem = any> {
   className?: string;
   style?: React.CSSProperties;
   /**
+   * Current state (width) of resized/resizing column (if any)
+   */
+  size?: string;
+  /**
    * Defines if specific column could be resized by `width`
    * default: true
    */
@@ -32,7 +36,7 @@ export interface TableDataColumn<DataItem = any> {
    */
   sortable?: boolean;
   /**
-   * Current state of ordering items in sorting results (if any)
+   * Current state of table items in sorting results (if any)
    */
   sortingOrder?: "asc" | "desc";
   /**
@@ -47,34 +51,41 @@ export interface TableDataColumn<DataItem = any> {
    */
   onSorting?: (row: TableDataRow<DataItem>, col: TableDataColumn<DataItem>, evt: React.MouseEvent) => void;
   /**
-   * This `data-getter` called when some column is `resizable` and resizing event is just started by user action (UI event)
-   * Usually this is a good place to update some external state for the table.
+   * This `data-getter` called when some column is `resizable` and resizing events by user action (UI event)
+   * Usually this is a good place to update some external state for the table (e.g. column sizes).
    */
-  onResizeStart?: (row: TableDataRow<DataItem>, col: TableDataColumn<DataItem>, evt: React.MouseEvent) => void;
+  onResizeStart?: (info: { columnId: TableColumnId, size: number }, evt: React.MouseEvent) => void;
+  onResizing?: (info: { columnId: TableColumnId, size: number, offsetX: number, offsetY: number }, evt: MouseEvent) => void;
+  onResizeEnd?: (info: { columnId: TableColumnId, size: number, offsetX: number, offsetY: number }, evt: MouseEvent) => void;
   /**
    * This event happens on successful drag & drop columns on each other when re-ordering.
    * Applicable currently only for heading columns (`table.props.columns`)
    */
-  onDragAndDrop?: (dropResult: { draggable: TableDataColumn<DataItem>, droppable: TableDataColumn<DataItem> }) => void;
+  onDragAndDrop?: (result: { draggable: TableDataColumn<DataItem>, droppable: TableDataColumn<DataItem> }) => void;
   /**
    * Callback to be used in rendering contents in every column (aka "data cell")
    */
   renderValue: (row: TableDataRow<DataItem>, col: TableDataColumn<DataItem>) => React.ReactNode;
 }
 
-interface TableColumnProps extends TableDataColumn {
+export interface TableColumnProps extends TableDataColumn {
   parentRow: TableDataRow;
 }
 
+const resizeStartOffset = { x: 0, y: 0 };
+
 export const TableColumn = observer((columnProps: TableColumnProps) => {
-  const { className = "", style = {}, title, sortable = true, draggable = true, resizable = true, parentRow, sortingOrder } = columnProps;
+  const {
+    id: columnId, className = "", title, style, sortable = true, draggable = true, resizable = true, parentRow, sortingOrder
+  } = columnProps;
   const isHeadingRow = parentRow.id === "thead";
   const sortingArrowClass = sortable && sortingOrder === "asc" ? styles.arrowUp : sortingOrder === "desc" ? styles.arrowDown : "";
   const isDraggableEnabled = isHeadingRow && draggable; // use in "thead"
+  const columnDataItemCopy = { ...columnProps };
 
   const [dragMetrics, dragRef] = isDraggableEnabled ? useDrag({
     type: tableColumnSortableType,
-    item: { ...columnProps },
+    item: columnDataItemCopy,
     collect(monitor) {
       return {
         [styles.isDragging]: monitor.isDragging(),
@@ -85,12 +96,11 @@ export const TableColumn = observer((columnProps: TableColumnProps) => {
   const [dropMetrics, dropRef] = isDraggableEnabled ? useDrop({
     accept: tableColumnSortableType,
     drop: (item: TableDataColumn, monitor) => {
-      const droppableColumn: TableDataColumn = { ...columnProps };
       columnProps.onDragAndDrop?.({
         draggable: item,
-        droppable: { ...columnProps }
+        droppable: columnDataItemCopy,
       });
-      return droppableColumn;
+      return columnDataItemCopy;
     },
     collect(monitor) {
       return {
@@ -106,23 +116,54 @@ export const TableColumn = observer((columnProps: TableColumnProps) => {
     ...Object.entries(dropMetrics ?? {}).filter(([param, enabled]) => enabled).map(([param]) => param),
   ].join(" ") : '';
 
-  const draggableClassName = isHeadingRow && draggable ? styles.draggable : "";
   const sortableClassName = isHeadingRow ? styles.sortable : "";
-  const columnClassName = `${styles.column} ${className} ${sortableClassName} ${draggableClassName} ${draggableClass}`;
+  const columnClassName = `${styles.column} ${className} ${sortableClassName} ${draggableClass}`;
 
-  const onClick = (evt: React.MouseEvent) => {
+  const onSorting = (evt: React.MouseEvent) => {
     if (isHeadingRow && sortable) {
-      columnProps.onSorting?.(parentRow, columnProps, evt);
+      columnProps.onSorting?.(parentRow, columnDataItemCopy, evt);
     }
   };
 
   const onResizeStart = (evt: React.MouseEvent) => {
     evt.stopPropagation();
-    columnProps.onResizeStart?.(parentRow, columnProps, evt);
+    evt.preventDefault();
+
+    const resizerElem = evt.target as HTMLElement;
+    let columnWidth = resizerElem.parentElement.scrollWidth;
+
+    resizeStartOffset.x = evt.pageX;
+    resizeStartOffset.y = evt.pageY;
+
+    columnProps.onResizeStart?.({ columnId, size: columnWidth }, evt);
+
+    const onResizing = (evt: MouseEvent) => {
+      const offsetX = evt.pageX - resizeStartOffset.x;
+      const offsetY = evt.pageY - resizeStartOffset.y;
+
+      columnProps.onResizing?.({
+        columnId, offsetX, offsetY,
+        size: columnWidth + offsetX,
+      }, evt);
+    };
+
+    document.body.addEventListener("mousemove", onResizing);
+    document.body.addEventListener("mouseup", function onResizeEnd(evt) {
+      const offsetX = evt.pageX - resizeStartOffset.x;
+      const offsetY = evt.pageY - resizeStartOffset.y;
+
+      columnProps.onResizeEnd?.({
+        columnId, offsetX, offsetY,
+        size: columnWidth + offsetX,
+      }, evt);
+
+      document.body.removeEventListener("mousemove", onResizing);
+      document.body.removeEventListener("mouseup", onResizeEnd);
+    });
   };
 
   return (
-    <div className={columnClassName} style={style} onClick={onClick} ref={elem => dropRef?.(dragRef(elem))}>
+    <div className={columnClassName} style={style} onMouseDown={onSorting} ref={elem => dropRef?.(dragRef(elem))}>
       {isHeadingRow && sortable && sortingArrowClass && <i className={sortingArrowClass}/>}
       <div className={styles.title}>
         {title}

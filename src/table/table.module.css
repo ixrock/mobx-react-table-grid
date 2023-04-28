@@ -133,11 +133,7 @@
   border-right: 0 solid var(--grid-resizer-color, #ffffff90);
   cursor: col-resize;
   transition: border .15s;
-  box-sizing: content-box;
-  padding-right: 0;
-}
-
-.draggable {
+  z-index: 10;
 }
 
 .isDragging {

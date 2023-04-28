@@ -70,7 +70,7 @@ export const Table = observer((props: TableProps) => {
 
   const cssVars = {
     ...style,
-    [`--grid-cols`]: columns.map(column => `var(--grid-col-size-${column.id}, var(--grid-col-size))`).join(" "),
+    [`--grid-cols`]: makeCssGridTemplate(columns),
     [`--grid-virtual-max-height`]: `${rowVirtualizer.getTotalSize()}px`,
   } as React.CSSProperties;
 
@@ -111,3 +111,9 @@ export const Table = observer((props: TableProps) => {
     </DndProvider>
   )
 });
+
+export function makeCssGridTemplate(columns: TableDataColumn[]): string {
+  return columns
+    .map(({ id, size }) => `[${id}] var(--grid-col-size-${id}, ${size ?? "var(--grid-col-size)"})`)
+    .join(" ")
+}

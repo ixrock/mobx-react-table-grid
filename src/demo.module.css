@@ -74,15 +74,16 @@ h2 {
   font-weight: 100;
 }
 
-.columnHiding {
-  padding: 0.5rem;
-  border-radius: 5px;
+input {
+  font-size: inherit;
 }
 
-.columnHidingElements {
+.columnFilters {
   display: flex;
-  flex-wrap: wrap;
+  border-radius: 5px;
   gap: 1em;
+  padding: .5em 0;
+  align-items: center;
 }
 
 .demoTable {

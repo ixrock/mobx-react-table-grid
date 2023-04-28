@@ -15,6 +15,7 @@ export const tableState = createTableState<ResourceStub>({
     {
       id: "index",
       title: <b>#</b>,
+      resizable: false, // column size is fixed (see: `.demoTable` css-class)
       className: styles.indexColumn,
       renderValue: (row) => row.index,
     },
@@ -37,6 +38,7 @@ export const tableState = createTableState<ResourceStub>({
     {
       id: ResourceColumnId.restarts,
       title: <>Restarts</>,
+      resizable: false, // column size is fixed (see: `demo.module.css`)
       renderValue: (row) => row.data.getRestarts()
     },
     {
@@ -79,9 +81,10 @@ export const TableDemo = inject(() => ({ store: tableState }))
     return (
       <>
         <h1>Mobx-React CSS Grid Table</h1>
-        <div className={styles.columnHiding}>
-          <h2>Column hiding</h2>
-          <div className={styles.columnHidingElements}>
+        <div className={styles.columnFilters}>
+          <input placeholder="Search"/>
+          <h2>Columns hiding</h2>
+          <div className={styles.columnsHiding}>
             <label>
               <input
                 defaultChecked

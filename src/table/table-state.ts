@@ -15,7 +15,7 @@ export function createTableState<DataItem = any>({ headingColumns, dataItems }: 
       // copy heading columns definition
       ...headColumn,
 
-      // sorting columns state handling
+      // sorting columns state
       get sortingOrder() {
         return sortedColumns.get(headColumn.id);
       },
@@ -25,7 +25,8 @@ export function createTableState<DataItem = any>({ headingColumns, dataItems }: 
         if (order === "asc") sortedColumns.set(column.id, "desc");
         if (order === "desc") sortedColumns.delete(column.id);
       }),
-      // re-ordering columns state handling
+
+      // re-ordering columns state
       onDragAndDrop: action(({ draggable, droppable }) => {
         const currentOrder = columnsOrder.length ? [...columnsOrder] : tableColumnsAll.map(column => column.id);
         const dragIndex = currentOrder.indexOf(draggable.id);
@@ -35,16 +36,21 @@ export function createTableState<DataItem = any>({ headingColumns, dataItems }: 
         currentOrder[dropIndex] = firstItem;
         columnsOrder.replace(currentOrder);
       }),
-      // resizing columns state handling
-      onResizeStart: action((row, column, evt) => {
-        console.log("[RESIZE]:", row, column, evt);
+
+      // resizing columns state
+      get size() {
+        return columnSizes.get(headColumn.id);
+      },
+      onResizing: action(({ columnId, size }) => {
+        columnSizes.set(columnId, `${size}px`);
       }),
     }
   });
 
   const hiddenColumns = observable.set<TableColumnId>();
   const sortedColumns = observable.map<TableColumnId, "asc" | "desc">();
-  const columnsOrder = observable.array<TableColumnId>(); // could be reordered by d&d
+  const columnsOrder = observable.array<TableColumnId>(); // columns could be reordered by d&d
+  const columnSizes = observable.map<TableColumnId, string>(); // columns could be resized
 
   const tableColumns = computed<TableDataColumn[]>(() => {
     if (columnsOrder.length) {
@@ -97,5 +103,6 @@ export function createTableState<DataItem = any>({ headingColumns, dataItems }: 
     tableColumns,
     tableRows,
     sortedTableRows,
+    columnSizes,
   }
 }
