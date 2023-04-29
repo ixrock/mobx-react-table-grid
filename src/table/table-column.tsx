@@ -57,6 +57,7 @@ export interface TableDataColumn<DataItem = any> {
   onResizeStart?: (info: { columnId: TableColumnId, size: number }, evt: React.MouseEvent) => void;
   onResizing?: (info: { columnId: TableColumnId, size: number, offsetX: number, offsetY: number }, evt: MouseEvent) => void;
   onResizeEnd?: (info: { columnId: TableColumnId, size: number, offsetX: number, offsetY: number }, evt: MouseEvent) => void;
+  onResizeReset?: (info: { columnId: TableColumnId }, evt: React.MouseEvent) => void;
   /**
    * This event happens on successful drag & drop columns on each other when re-ordering.
    * Applicable currently only for heading columns (`table.props.columns`)
@@ -162,6 +163,10 @@ export const TableColumn = observer((columnProps: TableColumnProps) => {
     });
   };
 
+  const onResizeReset = (evt: React.MouseEvent) => {
+    columnProps.onResizeReset?.({ columnId }, evt);
+  };
+
   return (
     <div className={columnClassName} style={style} onMouseDown={onSorting} ref={elem => dropRef?.(dragRef(elem))}>
       {isHeadingRow && sortable && sortingArrowClass && <i className={sortingArrowClass}/>}
@@ -169,7 +174,7 @@ export const TableColumn = observer((columnProps: TableColumnProps) => {
         {title}
       </div>
       {isHeadingRow && resizable && (
-        <i className={styles.resizable} onMouseDown={onResizeStart}/>
+        <i className={styles.resizable} onMouseDown={onResizeStart} onDoubleClick={onResizeReset}/>
       )}
     </div>
   )

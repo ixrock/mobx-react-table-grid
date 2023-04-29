@@ -44,6 +44,9 @@ export function createTableState<DataItem = any>({ headingColumns, dataItems }: 
       onResizing: action(({ columnId, size }) => {
         columnSizes.set(columnId, `${size}px`);
       }),
+      onResizeReset: action(({ columnId }) => {
+        columnSizes.delete(columnId);
+      }),
     }
   });
 

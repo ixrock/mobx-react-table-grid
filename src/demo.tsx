@@ -65,7 +65,7 @@ export const tableState = createTableState<ResourceStub>({
   ],
 })
 
-export const TableDemo = inject(() => ({ store: tableState }))
+export const Demo = inject(() => ({ store: tableState }))
 (
   observer((props: { id?: string, store?: CreateTableState }) => {
     const { tableColumnsAll, sortedTableRows, hiddenColumns, tableColumns } = props.store;
@@ -120,4 +120,4 @@ export const TableDemo = inject(() => ({ store: tableState }))
     );
   }));
 
-ReactDOM.render(<TableDemo/>, document.getElementById('app'));
+ReactDOM.render(<Demo/>, document.getElementById('app'));
