@@ -50,6 +50,7 @@ export function createTableState<DataItem = any>({ headingColumns, dataItems }: 
     }
   });
 
+  const searchText = observable.box("");
   const hiddenColumns = observable.set<TableColumnId>();
   const sortedColumns = observable.map<TableColumnId, "asc" | "desc">();
   const columnsOrder = observable.array<TableColumnId>(); // columns could be reordered by d&d
@@ -99,13 +100,27 @@ export function createTableState<DataItem = any>({ headingColumns, dataItems }: 
     return orderBy(tableRows.get(), sortingCallbacks, sortingOrders);
   });
 
+  const searchResultTableRows = computed<TableDataRow[]>(() => {
+    const search = searchText.get();
+    return sortedTableRows.get().filter((row) => {
+      return row.columns.some(col => {
+        const columnContent = col.searchValue?.(row, col) ?? col.renderValue(row, col);
+        if (typeof columnContent === "string") {
+          return columnContent.toLowerCase().includes(search.toLowerCase());
+        }
+      })
+    })
+  });
+
   return {
-    tableColumnsAll,
+    searchText,
+    columnSizes,
     hiddenColumns,
     sortedColumns,
     tableColumns,
+    tableColumnsAll,
     tableRows,
     sortedTableRows,
-    columnSizes,
+    searchResultTableRows,
   }
 }

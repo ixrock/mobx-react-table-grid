@@ -56,6 +56,7 @@ export const tableState = createTableState<ResourceStub>({
       title: <>Status</>,
       renderValue: (row) => renderStatus(row.data.getStatus()),
       sortValue: (row) => row.data.getStatus(),
+      searchValue: (row) => row.data.getStatus(), // to make this column searchable *we must* specify this callback cause `renderValue()` returns non-`string` ReactNode
     },
     {
       id: ResourceColumnId.age,
@@ -68,30 +69,20 @@ export const tableState = createTableState<ResourceStub>({
 export const Demo = inject(() => ({ store: tableState }))
 (
   observer((props: { id?: string, store?: CreateTableState }) => {
-    const { tableColumnsAll, sortedTableRows, hiddenColumns, tableColumns } = props.store;
-
-    const toggleAllColumns = action(() => {
-      if (tableColumnsAll.length != hiddenColumns.size) {
-        hiddenColumns.replace(tableColumnsAll.map(col => col.id));
-      } else {
-        hiddenColumns.clear();
-      }
-    });
+    const { tableColumnsAll, hiddenColumns, tableColumns, searchResultTableRows, searchText } = props.store;
 
     return (
       <>
         <h1>Mobx-React CSS Grid Table</h1>
         <div className={styles.columnFilters}>
-          <input placeholder="Search"/>
+          <input
+            placeholder="Search"
+            className={styles.searchText}
+            defaultValue={searchText.get()}
+            onChange={(event) => searchText.set(event.target.value.trim())}
+          />
           <h2>Columns hiding</h2>
           <div className={styles.columnsHiding}>
-            <label>
-              <input
-                defaultChecked
-                type="checkbox"
-                onChange={toggleAllColumns}
-              /> Toggle All
-            </label>
             {tableColumnsAll.map(column => {
               return (
                 <label key={column.id}>
@@ -114,7 +105,7 @@ export const Demo = inject(() => ({ store: tableState }))
           className={styles.demoTable}
           header={<b>Table Header</b>}
           columns={tableColumns.get()}
-          rows={sortedTableRows.get()}
+          rows={searchResultTableRows.get()}
         />
       </>
     );

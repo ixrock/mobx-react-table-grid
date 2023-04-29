@@ -40,12 +40,6 @@ export interface TableDataColumn<DataItem = any> {
    */
   sortingOrder?: "asc" | "desc";
   /**
-   * Callback to be used in data sorting items in every row and column
-   * By default, if this `data-getter` is not provided `renderValue(): ReactNode` would be used instead.
-   * NOTE: sorting doesn't work correctly if `renderValue()` returns not a `string` or `number`.
-   */
-  sortValue?: (row: TableDataRow<DataItem>, col: TableDataColumn<DataItem>) => string | number,
-  /**
    * This `data-getter` called when some column sorted by user action (UI event)
    * Usually this is a good place to update some external state for the table.
    */
@@ -67,13 +61,22 @@ export interface TableDataColumn<DataItem = any> {
    * Callback to be used in rendering contents in every column (aka "data cell")
    */
   renderValue: (row: TableDataRow<DataItem>, col: TableDataColumn<DataItem>) => React.ReactNode;
+  /**
+   * Callback to be used in data sorting items in every row and column
+   * By default, if this `data-getter` is not provided `renderValue(): ReactNode` would be used instead.
+   * NOTE: sorting doesn't work correctly if `renderValue()` returns not a `string` or `number`.
+   */
+  sortValue?: (row: TableDataRow<DataItem>, col: TableDataColumn<DataItem>) => string | number,
+  /**
+   * This callback could be used in filtering rows from search.
+   * Provide it to the columns definition (heading) when their `renderValue()` returns non-`string` ReactNode.
+   */
+  searchValue?: (row: TableDataRow<DataItem>, col: TableDataColumn<DataItem>) => string;
 }
 
 export interface TableColumnProps extends TableDataColumn {
   parentRow: TableDataRow;
 }
-
-const resizeStartOffset = { x: 0, y: 0 };
 
 export const TableColumn = observer((columnProps: TableColumnProps) => {
   const {
@@ -83,6 +86,7 @@ export const TableColumn = observer((columnProps: TableColumnProps) => {
   const sortingArrowClass = sortable && sortingOrder === "asc" ? styles.arrowUp : sortingOrder === "desc" ? styles.arrowDown : "";
   const isDraggableEnabled = isHeadingRow && draggable; // use in "thead"
   const columnDataItemCopy = { ...columnProps };
+  const resizeStartOffset = { x: 0, y: 0 };
 
   const [dragMetrics, dragRef] = isDraggableEnabled ? useDrag({
     type: tableColumnSortableType,

@@ -97,3 +97,7 @@ input {
 .indexColumn {
   filter: contrast(1000%);
 }
+
+.searchText {
+  padding: .35em;
+}
