@@ -1,11 +1,12 @@
 import styles from "./table.module.css";
 import React from "react";
 import { observer } from "mobx-react"
+import { DndProvider } from "react-dnd";
+import { HTML5Backend } from "react-dnd-html5-backend";
 import { useVirtualizer } from "@tanstack/react-virtual";
 import { TableDataRow, TableRow } from "./table-row";
 import type { TableDataColumn } from "./table-column";
-import { DndProvider } from "react-dnd";
-import { HTML5Backend } from "react-dnd-html5-backend";
+import { tableHeaderRowId, tableTheadRowId } from "./table-constants";
 
 export interface TableProps<DataItem = any> {
   className?: string;
@@ -17,7 +18,7 @@ export interface TableProps<DataItem = any> {
   header?: React.ReactNode;
   /**
    * Heading columns definition within the grid (aka <thead>-s but in data-terms).
-   * This outputs floating html block that stays always on the top of scrolled items list (`position: sticky`)
+   * This field produce floating html block that stays always on the top (sticky) of parent scrollable list.
    */
   columns: TableDataColumn<DataItem>[];
   /**
@@ -62,7 +63,7 @@ export const Table = observer((props: TableProps) => {
   const rowVirtualizer = useVirtualizer({
     count: rows.length,
     getScrollElement: () => tableElemRef.current,
-    getItemKey: (index: number) => rows[index].id ?? index,
+    getItemKey: (index: number) => String(rows[index].id ?? index),
     estimateSize: (index: number) => rowSize,
     paddingStart: rowSize + paddingStart,
     overscan: overscan,
@@ -78,10 +79,10 @@ export const Table = observer((props: TableProps) => {
     <DndProvider backend={HTML5Backend}>
       <div className={`${styles.table} ${className}`} style={cssVars} ref={tableElemRef}>
         {header && (
-          <TableRow id="header" className={styles.header} title={header} data={null}/>
+          <TableRow id={tableHeaderRowId} className={styles.header} title={header} data={null}/>
         )}
         <TableRow
-          id="thead"
+          id={tableTheadRowId}
           className={styles.thead}
           columns={columns}
           data={null}

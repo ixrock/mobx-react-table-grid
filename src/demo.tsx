@@ -1,7 +1,7 @@
 import styles from "./demo.module.css";
 import React from "react";
 import ReactDOM from "react-dom";
-import { inject, observer } from "mobx-react"
+import { observer } from "mobx-react"
 import { action, observable } from "mobx"
 import { CreateTableState, createTableState, Table } from "./table";
 import { makeData, renderContainers, renderStatus, ResourceColumnId, ResourceStub } from "./make-data";
@@ -66,49 +66,47 @@ export const tableState = createTableState<ResourceStub>({
   ],
 })
 
-export const Demo = inject(() => ({ store: tableState }))
-(
-  observer((props: { id?: string, store?: CreateTableState }) => {
-    const { tableColumnsAll, hiddenColumns, tableColumns, searchResultTableRows, searchText } = props.store;
+export const Demo = observer((props: { id?: string, store: CreateTableState }) => {
+  const { tableColumnsAll, hiddenColumns, tableColumns, searchResultTableRows, searchText } = props.store;
 
-    return (
-      <>
-        <h1>Mobx-React CSS Grid Table</h1>
-        <div className={styles.columnFilters}>
-          <input
-            placeholder="Search"
-            className={styles.searchText}
-            defaultValue={searchText.get()}
-            onChange={(event) => searchText.set(event.target.value.trim())}
-          />
-          <h2>Columns hiding</h2>
-          <div className={styles.columnsHiding}>
-            {tableColumnsAll.map(column => {
-              return (
-                <label key={column.id}>
-                  <input
-                    type="checkbox"
-                    defaultChecked
-                    onChange={action(() => {
-                      hiddenColumns.has(column.id) ? hiddenColumns.delete(column.id) : hiddenColumns.add(column.id);
-                    })}
-                  /> {column.title}
-                </label>
-              )
-            })}
-          </div>
-        </div>
-
-        <Table
-          paddingStart={30}
-          rowSize={50}
-          className={styles.demoTable}
-          header={<b>Table Header</b>}
-          columns={tableColumns.get()}
-          rows={searchResultTableRows.get()}
+  return (
+    <>
+      <h1>Mobx-React CSS Grid Table</h1>
+      <div className={styles.columnFilters}>
+        <input
+          placeholder="Search"
+          className={styles.searchText}
+          defaultValue={searchText.get()}
+          onChange={(event) => searchText.set(event.target.value.trim())}
         />
-      </>
-    );
-  }));
+        <h2>Columns hiding</h2>
+        <div className={styles.columnsHiding}>
+          {tableColumnsAll.map(column => {
+            return (
+              <label key={column.id}>
+                <input
+                  type="checkbox"
+                  defaultChecked
+                  onChange={action(() => {
+                    hiddenColumns.has(column.id) ? hiddenColumns.delete(column.id) : hiddenColumns.add(column.id);
+                  })}
+                /> {column.title}
+              </label>
+            )
+          })}
+        </div>
+      </div>
 
-ReactDOM.render(<Demo/>, document.getElementById('app'));
+      <Table
+        paddingStart={30}
+        rowSize={50}
+        className={styles.demoTable}
+        header={<b>Table Header</b>}
+        columns={tableColumns.get()}
+        rows={searchResultTableRows.get()}
+      />
+    </>
+  );
+});
+
+ReactDOM.render(<Demo store={tableState}/>, document.getElementById('app'));

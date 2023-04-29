@@ -3,16 +3,18 @@ import React from "react";
 import { observer } from "mobx-react"
 import type { TableDataRow } from "./table-row";
 import { useDrag, useDrop } from "react-dnd";
+import { tableColumnSortableType, tableTheadRowId } from "./table-constants";
 
 /**
  * Unique ID for every column in grid
  */
 export type TableColumnId = string;
 
-export const tableColumnSortableType = Symbol("[this is used in drag&drop iteractions with columns]");
-
 export interface TableDataColumn<DataItem = any> {
   id: TableColumnId;
+  /**
+   * Contents of the column that will be rendered.
+   */
   title: React.ReactNode;
   className?: string;
   style?: React.CSSProperties;
@@ -82,7 +84,7 @@ export const TableColumn = observer((columnProps: TableColumnProps) => {
   const {
     id: columnId, className = "", title, style, sortable = true, draggable = true, resizable = true, parentRow, sortingOrder
   } = columnProps;
-  const isHeadingRow = parentRow.id === "thead";
+  const isHeadingRow = parentRow.id === tableTheadRowId;
   const sortingArrowClass = sortable && sortingOrder === "asc" ? styles.arrowUp : sortingOrder === "desc" ? styles.arrowDown : "";
   const isDraggableEnabled = isHeadingRow && draggable; // use in "thead"
   const columnDataItemCopy = { ...columnProps };

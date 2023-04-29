@@ -3,7 +3,7 @@ import React from "react";
 import { observer } from "mobx-react"
 import { TableDataColumn, TableColumn } from "./table-column";
 
-export type TableRowId = string | number;
+export type TableRowId = string | number | symbol;
 
 export interface TableDataRow<DataItem = any> {
   id: TableRowId;
@@ -11,8 +11,8 @@ export interface TableDataRow<DataItem = any> {
   index?: number;
   className?: string;
   style?: React.CSSProperties;
-  title?: React.ReactNode; // applicable only for `props.columns` (heading)
-  columns?: TableDataColumn[]; // columns in the row
+  title?: React.ReactNode;
+  columns?: TableDataColumn[];
 }
 
 export interface TableRowProps extends TableDataRow {
