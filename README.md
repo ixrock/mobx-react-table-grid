@@ -21,6 +21,9 @@ npm install
 npm run dev
 ```
 
+![Screenshot](./public/css-table-grid-demo-screenshot.png)
+
+
 ## Example
 
 ```tsx
