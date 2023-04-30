@@ -85,6 +85,11 @@
     background: rgba(255, 255, 255, .9);
     transition: opacity ease-out 250ms;
 
+    &:not(.draggable) {
+      /* re-ordering column (d&d) is disabled */
+      cursor: default;
+    }
+
     &:hover {
       .resizable {
         border-right-width: var(--grid-resizer, 1px);
@@ -142,7 +147,6 @@
 
 .isDroppable {
   opacity: .75;
-  filter: blur(50%);
 }
 
 .isDraggingOverActiveDroppable {

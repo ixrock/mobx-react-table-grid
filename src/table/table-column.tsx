@@ -4,6 +4,7 @@ import { observer } from "mobx-react"
 import type { TableDataRow } from "./table-row";
 import { useDrag, useDrop } from "react-dnd";
 import { tableColumnSortableType, tableTheadRowId } from "./table-constants";
+import debounce from "lodash/debounce";
 
 /**
  * Unique ID for every column in grid
@@ -82,13 +83,19 @@ export interface TableColumnProps extends TableDataColumn {
 
 export const TableColumn = observer((columnProps: TableColumnProps) => {
   const {
-    id: columnId, className = "", title, style, sortable = true, draggable = true, resizable = true, parentRow, sortingOrder
+    id: columnId,
+    className = "", title, style, parentRow, sortingOrder,
+    sortable = true, draggable = true, resizable = true,
   } = columnProps;
+
   const isHeadingRow = parentRow.id === tableTheadRowId;
   const sortingArrowClass = sortable && sortingOrder === "asc" ? styles.arrowUp : sortingOrder === "desc" ? styles.arrowDown : "";
-  const isDraggableEnabled = isHeadingRow && draggable; // use in "thead"
+  const isDraggableEnabled = isHeadingRow && draggable; // use only in "thead"
+  const isSortableEnabled = isHeadingRow && sortable; // use only in "thead"
+  const isResizingEnabled = isHeadingRow && resizable; // use only in "thead"
   const columnDataItemCopy = { ...columnProps };
   const resizeStartOffset = { x: 0, y: 0 };
+  let isDragging = false;
 
   const [dragMetrics, dragRef] = isDraggableEnabled ? useDrag({
     type: tableColumnSortableType,
@@ -123,16 +130,19 @@ export const TableColumn = observer((columnProps: TableColumnProps) => {
     ...Object.entries(dropMetrics ?? {}).filter(([param, enabled]) => enabled).map(([param]) => param),
   ].join(" ") : '';
 
-  const sortableClassName = isHeadingRow ? styles.sortable : "";
+  const sortableClassName = isSortableEnabled ? styles.sortable : "";
   const columnClassName = `${styles.column} ${className} ${sortableClassName} ${draggableClass}`;
 
-  const onSorting = (evt: React.MouseEvent) => {
+  // debouncing for checking drag&drop event firing state before sorting anything out ;)
+  const onSorting = isSortableEnabled ? debounce((evt: React.MouseEvent) => {
+    if (isDragging) return; // skip sorting if reordering columns has started
+
     if (isHeadingRow && sortable) {
       columnProps.onSorting?.(parentRow, columnDataItemCopy, evt);
     }
-  };
+  }, 50) : undefined;
 
-  const onResizeStart = (evt: React.MouseEvent) => {
+  const onResizeStart = isResizingEnabled ? (evt: React.MouseEvent) => {
     evt.stopPropagation();
     evt.preventDefault();
 
@@ -167,14 +177,26 @@ export const TableColumn = observer((columnProps: TableColumnProps) => {
       document.body.removeEventListener("mousemove", onResizing);
       document.body.removeEventListener("mouseup", onResizeEnd);
     });
-  };
+  } : undefined;
 
-  const onResizeReset = (evt: React.MouseEvent) => {
+  const onResizeReset = isResizingEnabled ? (evt: React.MouseEvent) => {
     columnProps.onResizeReset?.({ columnId }, evt);
-  };
+  } : undefined;
+
+  const onDragStart = isDraggableEnabled ? (evt: React.DragEvent) => {
+    isDragging = true;
+  } : undefined;
+
+  const onDragEnd = isDraggableEnabled ? (evt: React.DragEvent) => {
+    isDragging = false;
+  } : undefined;
 
   return (
-    <div className={columnClassName} style={style} onMouseDown={onSorting} ref={elem => dropRef?.(dragRef(elem))}>
+    <div
+      className={columnClassName} style={style}
+      onDragStart={onDragStart} onDragEnd={onDragEnd} onMouseDown={onSorting}
+      ref={elem => dropRef?.(dragRef(elem))}
+    >
       {isHeadingRow && sortable && sortingArrowClass && <i className={sortingArrowClass}/>}
       <div className={styles.title}>
         {title}

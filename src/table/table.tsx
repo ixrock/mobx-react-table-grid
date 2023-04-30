@@ -45,6 +45,10 @@ export interface TableProps<DataItem = any> {
    * @dependencies of `@tanstack/react-virtual`
    */
   overscan?: number;
+  /**
+   * Allows to add custom static rows or some other contents (e.g. "+" button with `position: absolute`)
+   */
+  children?: React.ReactNode;
 }
 
 export const Table = observer((props: TableProps) => {
@@ -58,6 +62,7 @@ export const Table = observer((props: TableProps) => {
     header = null,
     rows = [],
     columns = [],
+    children,
   } = props;
 
   const rowVirtualizer = useVirtualizer({
@@ -69,10 +74,13 @@ export const Table = observer((props: TableProps) => {
     overscan: overscan,
   });
 
+  const virtualRows = rowVirtualizer.getVirtualItems();
+  const maxScrollHeight = virtualRows.length ? rowVirtualizer.getTotalSize() : 0;
+
   const cssVars = {
     ...style,
     [`--grid-cols`]: makeCssGridTemplate(columns),
-    [`--grid-virtual-max-height`]: `${rowVirtualizer.getTotalSize()}px`,
+    [`--grid-virtual-max-height`]: `${maxScrollHeight}px`,
   } as React.CSSProperties;
 
   return (
@@ -87,7 +95,7 @@ export const Table = observer((props: TableProps) => {
           columns={columns}
           data={null}
         />
-        {rowVirtualizer.getVirtualItems().map(virtualRow => {
+        {virtualRows.map(virtualRow => {
           const row = rows[virtualRow.index];
           return (
             <TableRow
@@ -108,6 +116,7 @@ export const Table = observer((props: TableProps) => {
             />
           );
         })}
+        {children}
       </div>
     </DndProvider>
   )

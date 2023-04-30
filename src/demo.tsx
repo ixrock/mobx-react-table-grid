@@ -22,7 +22,8 @@ export const tableState = createTableState<ResourceStub>({
     {
       id: ResourceColumnId.name,
       title: <>Name</>,
-      renderValue: (row) => row.data.getName()
+      draggable: false, // keeps fixed position in grid, not possible to re-order
+      renderValue: (row) => row.data.getName(),
     },
     {
       id: ResourceColumnId.namespace,
