@@ -27,17 +27,20 @@ npm run dev
 ## Example
 
 ```tsx
+import React from "react"
+import ReactDOM from "react-dom"
 import { observable } from "mobx"
 import { inject, observer } from "mobx-react"
-import { createTableState, Table } from "./src/table";
+import { CreateTableState, createTableState, Table } from "./src/table";
 
-interface MyTableGridDataItem {
-  name: string
-  getName(): React.ReactNode;
+interface MyResourceDataType {
+  name: string;
+  renderName(): React.ReactNode;
 };
 
-const tableState = createTableState<MyTableGridDataItem>({
-  dataItems: observable.array<MyTableGridDataItem>([/*...*/]),
+const tableState = createTableState<MyResourceDataType>({
+  /* iterable table rows data items , e.g. `Pod[]` */
+  dataItems: observable.array<MyTableGridDataItem>(),
   
   headingColumns: [
     {
@@ -48,20 +51,21 @@ const tableState = createTableState<MyTableGridDataItem>({
     {
       id: ResourceColumnId.name,
       title: <>Name</>,
-      renderValue: (row, col) => row.data.getName(),
+      renderValue: (row, col) => <b>{row.data.renderName()}</b>,
       sortValue: (row, col) => row.data.name,
     },
   ]
 });
 
-const TableGridDemoApp = observer(() => {
-  /* get observable state from globals -OR- inject via `mobx-react/@inject` */
-  const { tableColumns, sortedTableRows } = tableState;
+const Demo = observer((props: {store: CreateTableState}) => {
+  const { tableColumns, searchResultTableRows } = props.store;
 
   return <Table
     header={<b>Table Header</b>}
     columns={tableColumns.get()}
-    rows={sortedTableRows.get()}
+    rows={searchResultTableRows.get()}
   />
 });
+
+ReactDOM.render(<Demo store={tableState}/>, document.getElementById('app'));
 ```
