@@ -14,7 +14,7 @@ export interface TableDataRow<DataItem = any> {
   columns: TableDataColumn[];
   selected?: boolean;
   selectable?: boolean;
-  onSelect?(row: TableDataRow, evt: React.MouseEvent): void;
+  onSelect?(row: TableDataRow<DataItem>, evt: React.MouseEvent): void;
 }
 
 export interface TableRowProps extends TableDataRow {

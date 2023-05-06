@@ -65,12 +65,17 @@ export const tableState = createTableState<ResourceStub>({
       renderValue: (row) => row.data.getAge()
     },
   ],
-  customizeRows(row) {
-    return { selectable: true };
-  },
+  customizeRows() {
+    return {
+      selectable: true,
+      onSelect(row) {
+        console.log('[SELECT-ITEM]:', row);
+      }
+    };
+  }
 });
 
-export const Demo = observer((props: { id?: string, store: CreateTableState }) => {
+export const Demo = observer((props: { id?: string, store: CreateTableState<ResourceStub> }) => {
   const { tableColumnsAll, hiddenColumns, tableColumns, searchResultTableRows, searchText, selectedRowsId, selectedTableRowsAll } = props.store;
 
   const selectedRowsInfo = selectedTableRowsAll.get().map(row => {
