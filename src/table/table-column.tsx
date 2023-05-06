@@ -63,7 +63,7 @@ export interface TableDataColumn<DataItem = any> {
   /**
    * Callback to be used in rendering contents in every column (aka "data cell")
    */
-  renderValue: (row: TableDataRow<DataItem>, col: TableDataColumn<DataItem>) => React.ReactNode;
+  renderValue?: (row: TableDataRow<DataItem>, col: TableDataColumn<DataItem>) => React.ReactNode;
   /**
    * Callback to be used in data sorting items in every row and column
    * By default, if this `data-getter` is not provided `renderValue(): ReactNode` would be used instead.

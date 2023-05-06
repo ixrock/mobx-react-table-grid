@@ -87,7 +87,12 @@ export const Table = observer((props: TableProps) => {
     <DndProvider backend={HTML5Backend}>
       <div className={`${styles.table} ${className}`} style={cssVars} ref={tableElemRef}>
         {header && (
-          <TableRow id={tableHeaderRowId} className={styles.header} title={header} data={null}/>
+          <TableRow
+            id={tableHeaderRowId}
+            className={styles.header}
+            columns={[{ id: "header", title: header }]}
+            data={null}
+          />
         )}
         <TableRow
           id={tableTheadRowId}

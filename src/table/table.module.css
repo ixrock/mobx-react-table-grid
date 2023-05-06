@@ -36,7 +36,6 @@
   grid-column: 1 / -1; /* merge contents for all columns within a row */
   text-align: center;
   background: rgba(0, 0, 0, .75);
-  padding: var(--grid-spacing);
   z-index: 1;
 }
 

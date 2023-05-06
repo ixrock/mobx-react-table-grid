@@ -11,19 +11,19 @@ export interface TableDataRow<DataItem = any> {
   index?: number;
   className?: string;
   style?: React.CSSProperties;
-  title?: React.ReactNode;
-  columns?: TableDataColumn[];
+  columns: TableDataColumn[];
 }
 
 export interface TableRowProps extends TableDataRow {
+  onClick?(evt: React.MouseEvent): void;
 }
 
 export const TableRow = observer((rowProps: TableRowProps) => {
-  const { className = "", style = {}, title, columns } = rowProps;
+  const { className = "", style = {}, columns, onClick } = rowProps;
+  const parentRow = { ...rowProps };
   return (
-    <div className={`${styles.row} ${className}`} style={style}>
-      {title}
-      {columns?.map(columnData => <TableColumn {...columnData} parentRow={rowProps} key={columnData.id}/>)}
+    <div className={`${styles.row} ${className}`} onClick={onClick} style={style}>
+      {columns?.map(columnData => <TableColumn {...columnData} parentRow={parentRow} key={columnData.id}/>)}
     </div>
   )
 });
