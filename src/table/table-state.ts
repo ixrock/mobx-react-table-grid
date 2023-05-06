@@ -1,15 +1,24 @@
+import type React from "react";
 import { action, computed, observable } from "mobx"
-import type { TableColumnId, TableDataColumn, TableDataRow } from "./index";
+import type { TableColumnId, TableDataColumn, TableDataRow, TableRowId } from "./index";
 import orderBy from "lodash/orderBy";
 
 export interface CreateTableStateParams<ResourceItem = any> {
   dataItems: ResourceItem[];
-  headingColumns: TableDataColumn<ResourceItem>[]; // same as `Table.props.columns`
+  /**
+   * Columns definition as `Table.props.columns`.
+   * Used to build `Table.props.rows` state.
+   */
+  headingColumns: TableDataColumn<ResourceItem>[];
+  /**
+   * Allows to customize row before processing by table (e.g. make `selectable`)
+   */
+  customizeRows?: (row: TableDataRow) => Partial<TableDataRow>;
 }
 
 export type CreateTableState = ReturnType<typeof createTableState>;
 
-export function createTableState<DataItem = any>({ headingColumns, dataItems }: CreateTableStateParams) {
+export function createTableState<DataItem = any>({ headingColumns, dataItems, customizeRows }: CreateTableStateParams) {
   let tableColumnsAll: TableDataColumn<DataItem>[] = headingColumns.map((headColumn) => {
     return {
       // copy heading columns definition
@@ -52,6 +61,7 @@ export function createTableState<DataItem = any>({ headingColumns, dataItems }: 
 
   const searchText = observable.box("");
   const hiddenColumns = observable.set<TableColumnId>();
+  const selectedRowsId = observable.set<TableRowId>();
   const sortedColumns = observable.map<TableColumnId, "asc" | "desc">();
   const columnsOrder = observable.array<TableColumnId>(); // columns could be reordered by d&d
   const columnSizes = observable.map<TableColumnId, string>(); // columns could be resized
@@ -80,8 +90,25 @@ export function createTableState<DataItem = any>({ headingColumns, dataItems }: 
               return column.renderValue?.(row, column)
             },
           }
-        })
+        }),
       };
+
+      if (customizeRows) {
+        const customizedRow = customizeRows(row);
+        return {
+          ...row, // copy initial row fields
+          get selected() {
+            return selectedRowsId.has(row.id);
+          },
+          ...customizedRow, // allow to override "selected" but not "onSelect"
+          onSelect: action((row: TableDataRow, evt: React.MouseEvent) => {
+            if (selectedRowsId.has(row.id)) selectedRowsId.delete(row.id);
+            else selectedRowsId.add(row.id);
+            customizedRow.onSelect?.(row, evt);
+          }),
+        }
+      }
+
       return row;
     });
   });
@@ -104,12 +131,20 @@ export function createTableState<DataItem = any>({ headingColumns, dataItems }: 
     const search = searchText.get();
     return sortedTableRows.get().filter((row) => {
       return row.columns.some(col => {
-        const columnContent = col.searchValue?.(row, col) ?? col.renderValue(row, col);
+        const columnContent = col.searchValue?.(row, col) ?? col.renderValue?.(row, col);
         if (typeof columnContent === "string") {
           return columnContent.toLowerCase().includes(search.toLowerCase());
         }
       })
     })
+  });
+
+  const selectedTableRowsAll = computed<TableDataRow[]>(() => {
+    return tableRows.get().filter(row => selectedRowsId.has(row.id));
+  });
+
+  const selectedTableRowsFiltered = computed<TableDataRow[]>(() => {
+    return searchResultTableRows.get().filter(row => selectedRowsId.has(row.id));
   });
 
   return {
@@ -122,5 +157,8 @@ export function createTableState<DataItem = any>({ headingColumns, dataItems }: 
     tableRows,
     sortedTableRows,
     searchResultTableRows,
+    selectedRowsId,
+    selectedTableRowsAll,
+    selectedTableRowsFiltered,
   }
 }

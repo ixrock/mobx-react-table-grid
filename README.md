@@ -11,17 +11,19 @@ Easy to use and powerful react table-grid based on CSS-grid layout component
 - multi-columns sorting _(powered by `lodash/orderBy`)_ 
 - reordering and resizing columns _(powered by `react-dnd`)_ 
 - filtering columns _(show/hide/search)_ 
+- rows selection state management
 - customize column sizes via css-variables `--grid-col-size-${columnId}` _(see usage in `demo.module.css`)_
 - `mobx` observability for grid state management under the hood
 
 ## Demo
 
+![Screenshot](./public/demo-sshot.png)
+
 ```
+# Run it by yourself
 npm install
 npm run dev
 ```
-
-![Screenshot](./public/css-table-grid-demo-screenshot.png)
 
 
 ## Example

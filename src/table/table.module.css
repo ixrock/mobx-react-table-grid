@@ -6,6 +6,9 @@
 .table {
   --grid-col-size: minmax(50px, 1fr);
   --grid-spacing: var(--grid-gap, 8px);
+  --grid-row-highlight-bgc: #000000aa;
+  --grid-row-selected-bgc: #3d90ce;
+  --grid-row-selected-color: white;
 
   position: relative;
   display: grid;
@@ -47,14 +50,8 @@
   transition: background-color ease-in-out .35s;
   align-items: center;
 
-  /* TODO: use with `src/hooks/useVirtualization.tsx`  */
-  &[data-intersection="hidden"] {
-    background: rgba(255, 0, 0, .1);
-  }
-
   &:not(.thead):hover {
-    cursor: pointer;
-    background: #000000aa;
+    background: var(--grid-row-highlight-bgc);
   }
 }
 
@@ -152,3 +149,11 @@
   opacity: 1;
 }
 
+.selectable {
+  cursor: pointer;
+}
+
+.selectedRow {
+  color: var(--grid-row-selected-color) !important;
+  background-color: var(--grid-row-selected-bgc) !important;
+}

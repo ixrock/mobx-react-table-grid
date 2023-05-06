@@ -104,12 +104,11 @@ export const Table = observer((props: TableProps) => {
           const row = rows[virtualRow.index];
           return (
             <TableRow
+              {...row}
               key={virtualRow.key}
               id={virtualRow.key}
               index={virtualRow.index}
               className={`${styles.row} ${row.className ?? ""}`}
-              data={row.data}
-              columns={row.columns}
               style={{
                 ...row.style,
                 position: "absolute",

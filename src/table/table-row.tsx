@@ -12,18 +12,28 @@ export interface TableDataRow<DataItem = any> {
   className?: string;
   style?: React.CSSProperties;
   columns: TableDataColumn[];
+  selected?: boolean;
+  selectable?: boolean;
+  onSelect?(row: TableDataRow, evt: React.MouseEvent): void;
 }
 
 export interface TableRowProps extends TableDataRow {
-  onClick?(evt: React.MouseEvent): void;
 }
 
 export const TableRow = observer((rowProps: TableRowProps) => {
-  const { className = "", style = {}, columns, onClick } = rowProps;
+  const { className = "", style = {}, columns, selectable, selected } = rowProps;
+  const selectableClassName = selectable ? styles.selectable : "";
+  const selectedClassName = selectable && selected ? styles.selectedRow : "";
+  const rowClassName = `${styles.row} ${className} ${selectableClassName} ${selectedClassName}`;
   const parentRow = { ...rowProps };
+
+  const onSelect = selectable ? (evt: React.MouseEvent) => {
+    parentRow.onSelect?.(parentRow, evt);
+  } : undefined;
+
   return (
-    <div className={`${styles.row} ${className}`} onClick={onClick} style={style}>
-      {columns?.map(columnData => <TableColumn {...columnData} parentRow={parentRow} key={columnData.id}/>)}
+    <div className={rowClassName} onClick={onSelect} style={style}>
+      {columns.map(columnData => <TableColumn {...columnData} parentRow={parentRow} key={columnData.id}/>)}
     </div>
   )
 });

@@ -65,21 +65,34 @@ export const tableState = createTableState<ResourceStub>({
       renderValue: (row) => row.data.getAge()
     },
   ],
-})
+  customizeRows(row) {
+    return { selectable: true };
+  },
+});
 
 export const Demo = observer((props: { id?: string, store: CreateTableState }) => {
-  const { tableColumnsAll, hiddenColumns, tableColumns, searchResultTableRows, searchText } = props.store;
+  const { tableColumnsAll, hiddenColumns, tableColumns, searchResultTableRows, searchText, selectedRowsId, selectedTableRowsAll } = props.store;
+
+  const selectedRowsInfo = selectedTableRowsAll.get().map(row => {
+    const title = row.columns.find(row => row.id === ResourceColumnId.name).title;
+    return (
+      <div className={styles.selectedItem} key={String(row.id)}>
+        {title}
+        <i className={styles.unselectItem} onClick={action(() => selectedRowsId.delete(row.id))}/>
+      </div>
+    )
+  });
 
   return (
     <>
       <h1>Mobx-React CSS Grid Table</h1>
+      <input
+        placeholder="Search"
+        className={styles.searchText}
+        defaultValue={searchText.get()}
+        onChange={action((event) => searchText.set(event.target.value.trim()))}
+      />
       <div className={styles.columnFilters}>
-        <input
-          placeholder="Search"
-          className={styles.searchText}
-          defaultValue={searchText.get()}
-          onChange={(event) => searchText.set(event.target.value.trim())}
-        />
         <h2>Columns hiding</h2>
         <div className={styles.columnsHiding}>
           {tableColumnsAll.map(column => {
@@ -88,15 +101,21 @@ export const Demo = observer((props: { id?: string, store: CreateTableState }) =
                 <input
                   type="checkbox"
                   defaultChecked
-                  onChange={action(() => {
-                    hiddenColumns.has(column.id) ? hiddenColumns.delete(column.id) : hiddenColumns.add(column.id);
-                  })}
+                  onChange={action(() => hiddenColumns.has(column.id) ? hiddenColumns.delete(column.id) : hiddenColumns.add(column.id))}
                 /> {column.title}
               </label>
             )
           })}
         </div>
       </div>
+
+      {selectedRowsInfo.length > 0 && (
+        <div className={styles.selectedRows}>
+          <h2>Selected names</h2>
+          {selectedRowsInfo}
+          <button className={styles.unselectAll} onClick={() => selectedRowsId.clear()}>Unselect All</button>
+        </div>
+      )}
 
       <Table
         paddingStart={30}

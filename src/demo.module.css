@@ -11,6 +11,18 @@
   flex-direction: column;
 }
 
+.demoTable {
+  --grid-col-size-index: max-content;
+  --grid-col-size-restarts: 100px;
+
+  border: 1px solid currentColor;
+  border-radius: 3px;
+}
+
+.indexColumn {
+  filter: contrast(1000%);
+}
+
 body {
   margin: 0;
   padding: 16px;
@@ -86,18 +98,48 @@ input {
   align-items: center;
 }
 
-.demoTable {
-  --grid-col-size-index: max-content;
-  --grid-col-size-restarts: 100px;
-
-  border: 1px solid currentColor;
-  border-radius: 3px;
+.selectedRows {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(120px, min-content));
+  place-items: center;
+  margin-block-end: 1em;
+  gap: .5em;
 }
 
-.indexColumn {
-  filter: contrast(1000%);
+.selectedItem {
+  position: relative;
+  display: inline-block;
+
+  .unselectItem {
+    position: absolute;
+    right: 0;
+    top: 0;
+    margin: -10px;
+    font-size: 14px;
+    cursor: pointer;
+    border-radius: 50%;
+    width: 18px;
+    height: 18px;
+    text-align: center;
+    transition: all 200ms ease;
+
+    &:hover {
+      color: black;
+      background: white;
+    }
+
+    &:after {
+      content: "✖";
+    }
+  }
+}
+
+.unselectAll {
+  padding: .5em;
+  font-size: 100%;
 }
 
 .searchText {
   padding: .35em;
+  margin: 0 10%;
 }
