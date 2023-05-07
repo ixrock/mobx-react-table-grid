@@ -5,13 +5,14 @@ Easy to use and powerful react table-grid based on CSS-grid layout component
 
 ## Benefits
 
-- easy-to-follow and simple API _(just use as data input plain-objects and data-getters, see `TableDataColumn` and `TableDataRow` interfaces)_
+- easy-to-follow and simple API _(just use as data input plain-objects and data-getters, mostly see `TableDataColumn` and `TableDataRow` interfaces)_
 - table rows virtualization _(handle large amount of items, e.g. you can handle 10k pods from k8s, see the demo with generated data)_
 - most of the layout done via `display: grid` with some help of css-variables _(works really fast!)_ 
 - multi-columns sorting _(powered by `lodash/orderBy`)_ 
 - reordering and resizing columns _(powered by `react-dnd`)_ 
 - filtering columns _(show/hide/search)_ 
 - rows selection state management
+- handling import/export state to external storage (e.g. `window.localStorage`, see: `demo.tsx`)
 - customize column sizes via css-variables `--grid-col-size-${columnId}` _(see usage in `demo.module.css`)_
 - `mobx` observability for grid state management under the hood
 
@@ -20,7 +21,6 @@ Easy to use and powerful react table-grid based on CSS-grid layout component
 ![Screenshot](./public/demo-sshot.png)
 
 ```
-# Run it by yourself
 npm install
 npm run dev
 ```
@@ -33,7 +33,7 @@ import React from "react"
 import ReactDOM from "react-dom"
 import { observable } from "mobx"
 import { inject, observer } from "mobx-react"
-import { CreateTableState, createTableState, Table } from "./src/table";
+import { CreateTableState, createTableState, Table, bindAutoSaveChangesToStorage } from "./src/table";
 
 interface MyResourceDataType {
   name: string;
@@ -41,7 +41,7 @@ interface MyResourceDataType {
 };
 
 const tableState = createTableState<MyResourceDataType>({
-  /* iterable table rows data items , e.g. `Pod[]` */
+  /* some iterable data items , e.g. `k8s.Pod[]` */
   dataItems: observable.array<MyTableGridDataItem>(),
   
   headingColumns: [
@@ -60,14 +60,30 @@ const tableState = createTableState<MyResourceDataType>({
 });
 
 const Demo = observer((props: {store: CreateTableState}) => {
-  const { tableColumns, searchResultTableRows } = props.store;
+  const { tableColumns, sortedTableRows } = props.store;
 
   return <Table
     header={<b>Table Header</b>}
     columns={tableColumns.get()}
-    rows={searchResultTableRows.get()}
+    rows={sortedTableRows.get()}
   />
 });
 
+/**
+ * Preload -> import -> auto-save table state changes with external storage, e.g. `window.localStorage`
+ * @optional
+ */
+await bindAutoSaveChangesToStorage<ResourceStub>({
+  tableId: "demo",
+  tableState: tableState,
+  toStorage(tableId, state) {
+    window.localStorage.setItem(tableId, JSON.stringify(state));
+  },
+  async fromStorage(tableId: string) {
+    return JSON.parse(window.localStorage.getItem(tableId) ?? `{}`);
+  }
+});
+
+// Render app with last used state
 ReactDOM.render(<Demo store={tableState}/>, document.getElementById('app'));
 ```
