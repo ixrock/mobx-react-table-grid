@@ -3,6 +3,11 @@
 
 Easy to use and powerful react table-grid based on CSS-grid layout component
 
+## Install _(not released yet)_
+```
+npm install mobx-react-table-grid --save
+```
+
 ## Benefits
 
 - easy-to-follow and simple API _(just use as data input plain-objects and data-getters, mostly see `TableDataColumn` and `TableDataRow` interfaces)_
@@ -20,10 +25,14 @@ Easy to use and powerful react table-grid based on CSS-grid layout component
 
 ![Screenshot](./public/demo-sshot.png)
 
+
 ```
+git checkout git@github.com:ixrock/mobx-react-table-grid.git
 npm install
 npm run dev
 ```
+
+
 
 
 ## Example

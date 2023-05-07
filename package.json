@@ -1,12 +1,21 @@
 {
-  "name": "@ixrock/mobx-react-table-grid",
+  "name": "mobx-react-table-grid",
   "version": "1.0.0",
   "description": "Easy to use and powerful react table-grid layout based on CSS-grid",
+  "license": "MIT",
+  "author": "ixrock",
   "scripts": {
-    "dev": "webpack serve --mode development --open",
-    "build": "webpack --mode production",
-    "clean:dist": "rimraf dist/"
+    "dev": "webpack serve --open",
+    "build": "NODE_ENV=production webpack",
+    "build-types": "tsc --project tsconfig-build-types.json",
+    "release-build": "npm run clean && npm run build && npm run build-types",
+    "clean": "rimraf dist/"
   },
+  "main": "index.js",
+  "types": "index.d.ts",
+  "files": [
+    "*.*(js|d.ts|.css|.json)"
+  ],
   "repository": {
     "type": "git",
     "url": "git+https://github.com/ixrock/mobx-react-table-grid.git"
@@ -14,7 +23,12 @@
   "bugs": {
     "url": "https://github.com/ixrock/mobx-react-table-grid/issues"
   },
+  "dependencies": {
+    "@tanstack/react-virtual": "^3.0.0-beta.54"
+  },
   "devDependencies": {
+    "@types/copy-webpack-plugin": "^10.1.0",
+    "copy-webpack-plugin": "^11.0.0",
     "css-loader": "^6.7.3",
     "fakerator": "^0.3.6",
     "fork-ts-checker-webpack-plugin": "^8.0.0",
@@ -30,7 +44,6 @@
     "webpack-dev-server": "^4.13.2"
   },
   "peerDependencies": {
-    "@tanstack/react-virtual": "^3.0.0-beta.54",
     "@types/lodash": "^4.14.194",
     "@types/react": "^17 || ^18",
     "@types/react-dom": "^17 || ^18",

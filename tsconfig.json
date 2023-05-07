@@ -3,9 +3,9 @@
     "rootDir": "./",
     "outDir": "./dist/",
     "jsx": "react",
-    "target": "ES2020",
-    "lib": ["ESNext", "DOM", "DOM.Iterable", "WebWorker"],
-    "module": "ESNext",
+    "target": "ES2019",
+    "lib": ["ESNext", "DOM", "DOM.Iterable"],
+    "module": "CommonJS",
     "moduleResolution": "node",
     "allowJs": true,
     "sourceMap": true,
@@ -15,7 +15,9 @@
     "emitDecoratorMetadata": true,
     "resolveJsonModule": true,
     "useDefineForClassFields": true,
-    "importsNotUsedAsValues": "remove"
+    "importsNotUsedAsValues": "remove",
+    "skipLibCheck": true,
+    "declaration": true
   },
   "ts-node": {
     "transpileOnly": true,

@@ -1,5 +1,5 @@
 import { reaction, comparer } from "mobx";
-import { type CreatedTableState, importState, StorableCreateTableState, toJSON } from "./index";
+import { type CreatedTableState, importState, StorableCreateTableState, toJSON } from "./table-state";
 
 export interface BindAutoSaveToStorageParams<DataItem> {
   tableId: string;

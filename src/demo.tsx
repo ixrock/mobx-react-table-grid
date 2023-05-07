@@ -94,6 +94,7 @@ export const Demo = observer((props: { id?: string, store: CreatedTableState<Res
     <>
       <h1>Mobx-React CSS Grid Table</h1>
       <input
+        autoFocus
         placeholder="Search"
         className={styles.searchText}
         defaultValue={searchText.get()}
@@ -140,7 +141,7 @@ export const Demo = observer((props: { id?: string, store: CreatedTableState<Res
 /**
  * Preload, import and auto-save table-state changes with `window.localStorage`
  */
-await bindAutoSaveChangesToStorage<ResourceStub>({
+bindAutoSaveChangesToStorage<ResourceStub>({
   tableId, tableState,
   toStorage(tableId, state) {
     console.log(`[SAVING STATE]: id=${tableId}`, state);
@@ -149,7 +150,6 @@ await bindAutoSaveChangesToStorage<ResourceStub>({
   async fromStorage(tableId: string) {
     return JSON.parse(window.localStorage.getItem(tableId) ?? `{}`);
   }
+}).then(() => {
+  ReactDOM.render(<Demo store={tableState}/>, document.getElementById('app'));
 });
-
-// Render app with last used state
-ReactDOM.render(<Demo store={tableState}/>, document.getElementById('app'));

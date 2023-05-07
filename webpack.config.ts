@@ -1,22 +1,36 @@
+import packageJson from "./package.json";
+import webpack from "webpack"
 import path from "path"
 import HtmlWebpackPlugin from 'html-webpack-plugin'
 import MiniCssExtractPlugin from 'mini-css-extract-plugin'
 import ForkTsCheckerWebpackPlugin from 'fork-ts-checker-webpack-plugin'
+import CopyWebpackPlugin from 'copy-webpack-plugin'
 
 const isDevelopment = process.env.NODE_ENV !== 'production';
+const peerDependencies = Object.keys(packageJson.peerDependencies).map(name => name.replace("@", "\\@"));
 
 module.exports = {
   mode: isDevelopment ? 'development' : 'production',
-  devtool: isDevelopment ? 'source-map' : false,
-  entry: {
-    app: './src/demo.tsx',
+  entry: isDevelopment ? {
+    demo: './src/demo.tsx',
+  } : {
+    index: path.resolve(__dirname, './src/table/index.ts'),
   },
+  devtool: "source-map",
+  externals: isDevelopment ? [] : peerDependencies, // exclude bundling with lib "react", "mobx", etc.
   output: {
-    path: path.resolve(__dirname, 'dist'),
+    path: path.resolve(__dirname, 'dist/src/table'),
     filename: '[name].js',
+    libraryTarget: "this",
+    library: {
+      type: "commonjs-module",
+    }
   },
   resolve: {
     extensions: ['.ts', '.tsx', '.js'],
+  },
+  optimization: {
+    minimize: false,
   },
   experiments: {
     topLevelAwait: true,
@@ -60,17 +74,28 @@ module.exports = {
     ],
   },
   plugins: [
-    new ForkTsCheckerWebpackPlugin(),
-    new HtmlWebpackPlugin({
-      title: 'Demo: mobx react css grid-table',
-      template: path.resolve(__dirname, 'public/index.html'),
-      filename: 'index.html',
-      inject: true
-    }),
-    ...(isDevelopment ? [] : [new MiniCssExtractPlugin()]),
+    ...(isDevelopment ? [
+      new ForkTsCheckerWebpackPlugin(),
+      new HtmlWebpackPlugin({
+        title: 'Demo: mobx-react-css-grid-table',
+        template: path.resolve(__dirname, 'public/index.html'),
+        filename: 'index.html',
+        inject: true
+      }),
+    ] : [
+      new MiniCssExtractPlugin(),
+      new CopyWebpackPlugin({
+        patterns: [
+          { from: "LICENSE" },
+          { from: "README.md" },
+          { from: "package.json" },
+        ]
+      }),
+    ]),
+
   ],
   devServer: {
     compress: true,
     port: 9001,
   },
-};
+} as webpack.Configuration;
