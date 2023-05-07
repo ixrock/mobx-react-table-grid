@@ -9,6 +9,7 @@ import type { TableDataColumn } from "./table-column";
 import { tableHeaderRowId, tableTheadRowId } from "./table-constants";
 
 export interface TableProps<DataItem = any> {
+  id?: string;
   className?: string;
   style?: React.CSSProperties;
   /**
@@ -85,7 +86,7 @@ export const Table = observer((props: TableProps) => {
 
   return (
     <DndProvider backend={HTML5Backend}>
-      <div className={`${styles.table} ${className}`} style={cssVars} ref={tableElemRef}>
+      <div id={props.id} className={`${styles.table} ${className}`} style={cssVars} ref={tableElemRef}>
         {header && (
           <TableRow
             id={tableHeaderRowId}

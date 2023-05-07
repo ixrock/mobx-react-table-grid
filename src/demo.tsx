@@ -3,8 +3,10 @@ import React from "react";
 import ReactDOM from "react-dom";
 import { observer } from "mobx-react"
 import { action, observable } from "mobx"
-import { CreateTableState, createTableState, Table } from "./table";
+import { CreatedTableState, createTableState, Table, bindAutoSaveChangesToStorage } from "./table";
 import { makeData, renderContainers, renderStatus, ResourceColumnId, ResourceStub } from "./make-data";
+
+export const tableId = "demo";
 
 export const tableState = createTableState<ResourceStub>({
   // some observable state from external stores, injectables, etc.
@@ -75,7 +77,7 @@ export const tableState = createTableState<ResourceStub>({
   }
 });
 
-export const Demo = observer((props: { id?: string, store: CreateTableState<ResourceStub> }) => {
+export const Demo = observer((props: { id?: string, store: CreatedTableState<ResourceStub> }) => {
   const { tableColumnsAll, hiddenColumns, tableColumns, searchResultTableRows, searchText, selectedRowsId, selectedTableRowsAll } = props.store;
 
   const selectedRowsInfo = selectedTableRowsAll.get().map(row => {
@@ -105,7 +107,7 @@ export const Demo = observer((props: { id?: string, store: CreateTableState<Reso
               <label key={column.id}>
                 <input
                   type="checkbox"
-                  defaultChecked
+                  defaultChecked={!hiddenColumns.has(column.id)}
                   onChange={action(() => hiddenColumns.has(column.id) ? hiddenColumns.delete(column.id) : hiddenColumns.add(column.id))}
                 /> {column.title}
               </label>
@@ -123,6 +125,7 @@ export const Demo = observer((props: { id?: string, store: CreateTableState<Reso
       )}
 
       <Table
+        id={tableId}
         paddingStart={30}
         rowSize={50}
         className={styles.demoTable}
@@ -134,4 +137,19 @@ export const Demo = observer((props: { id?: string, store: CreateTableState<Reso
   );
 });
 
+/**
+ * Preload, import and auto-save table-state changes with `window.localStorage`
+ */
+await bindAutoSaveChangesToStorage<ResourceStub>({
+  tableId, tableState,
+  toStorage(tableId, state) {
+    console.log(`[SAVING STATE]: id=${tableId}`, state);
+    window.localStorage.setItem(tableId, JSON.stringify(state));
+  },
+  async fromStorage(tableId: string) {
+    return JSON.parse(window.localStorage.getItem(tableId) ?? `{}`);
+  }
+});
+
+// Render app with last used state
 ReactDOM.render(<Demo store={tableState}/>, document.getElementById('app'));

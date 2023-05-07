@@ -3,6 +3,9 @@ import { action, computed, observable } from "mobx"
 import type { TableColumnId, TableDataColumn, TableDataRow, TableRowId } from "./index";
 import orderBy from "lodash/orderBy";
 
+export type CreatedTableState<DataItem> = ReturnType<typeof createTableState<DataItem>>; /* observables + computed */
+export type StorableCreateTableState<DataItem> = ReturnType<typeof toJSON<DataItem>>; /* plain json */
+
 export interface CreateTableStateParams<ResourceItem = any> {
   dataItems: ResourceItem[];
   /**
@@ -20,8 +23,6 @@ export interface CreateTableStateParams<ResourceItem = any> {
    */
   getRowId?: (dataItem: ResourceItem) => TableRowId;
 }
-
-export type CreateTableState<DataItem> = ReturnType<typeof createTableState<DataItem>>;
 
 export function createTableState<DataItem = any>({ headingColumns, dataItems, customizeRows, getRowId }: CreateTableStateParams<DataItem>) {
   let tableColumnsAll: TableDataColumn<DataItem>[] = headingColumns.map((headColumn) => {
@@ -163,6 +164,7 @@ export function createTableState<DataItem = any>({ headingColumns, dataItems, cu
   return {
     searchText,
     columnSizes,
+    columnsOrder,
     hiddenColumns,
     sortedColumns,
     tableColumns,
@@ -173,5 +175,35 @@ export function createTableState<DataItem = any>({ headingColumns, dataItems, cu
     selectedRowsId,
     selectedTableRowsAll,
     selectedTableRowsFiltered,
+  }
+}
+
+export interface ImportStateParams<DataItem> {
+  tableState: CreatedTableState<DataItem>;
+  storedState?: StorableCreateTableState<DataItem>;
+}
+
+export function importState<DataItem>({ tableState, storedState }: ImportStateParams<DataItem>) {
+  if (!storedState) return;
+  const { columnsSizes = [], sortedColumns = [], columnsOrder, hiddenColumns = [], selectedRowsId = [], searchText = "" } = storedState;
+
+  tableState.searchText.set(searchText);
+  tableState.sortedColumns.replace(sortedColumns);
+  tableState.columnsOrder.replace(columnsOrder);
+  tableState.columnSizes.replace(columnsSizes);
+  tableState.hiddenColumns.replace(hiddenColumns);
+  tableState.selectedRowsId.replace(selectedRowsId);
+}
+
+export function toJSON<DataItem>(state: CreatedTableState<DataItem>) {
+  const { searchText, hiddenColumns, selectedRowsId, sortedColumns, columnSizes, columnsOrder } = state;
+
+  return {
+    searchText: searchText.get(),
+    hiddenColumns: hiddenColumns.toJSON(),
+    selectedRowsId: selectedRowsId.toJSON(),
+    sortedColumns: sortedColumns.toJSON(),
+    columnsOrder: columnsOrder.toJSON(),
+    columnsSizes: columnSizes.toJSON(),
   }
 }
