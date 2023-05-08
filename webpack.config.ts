@@ -7,7 +7,17 @@ import ForkTsCheckerWebpackPlugin from 'fork-ts-checker-webpack-plugin'
 import CopyWebpackPlugin from 'copy-webpack-plugin'
 
 const isDevelopment = process.env.NODE_ENV !== 'production';
-const peerDependencies = Object.keys(packageJson.peerDependencies).map(name => name.replace("@", "\\@"));
+
+const externals = Object.keys(packageJson.peerDependencies)
+  .filter(name => !name.startsWith("@types"))
+  .map(name => name.replace("@", "\\@"))
+  .reduce((externals, packageName) => {
+    return {
+      ...externals,
+      [packageName]: `commonjs ${packageName}`,
+    }
+  }, {})
+;
 
 module.exports = {
   mode: isDevelopment ? 'development' : 'production',
@@ -17,7 +27,7 @@ module.exports = {
     index: path.resolve(__dirname, './src/table/index.ts'),
   },
   devtool: "source-map",
-  externals: isDevelopment ? [] : peerDependencies, // exclude bundling with lib "react", "mobx", etc.
+  externals: isDevelopment ? [] : externals, // exclude bundling with lib "react", "mobx", etc.
   output: {
     path: path.resolve(__dirname, 'dist/src/table'),
     filename: '[name].js',
@@ -30,7 +40,7 @@ module.exports = {
     extensions: ['.ts', '.tsx', '.js'],
   },
   optimization: {
-    minimize: false,
+    minimize: !isDevelopment,
   },
   experiments: {
     topLevelAwait: true,
@@ -53,18 +63,29 @@ module.exports = {
         ],
       },
       {
-        test: /\.module\.css$/,
+        test: /\.s?css$/,
         use: [
           isDevelopment ? 'style-loader' : MiniCssExtractPlugin.loader,
           {
             loader: 'css-loader',
             options: {
+              sourceMap: isDevelopment,
               modules: {
+                auto: /\.module\./i, // https://github.com/webpack-contrib/css-loader#auto
+                mode: "local", // :local(.selector) by default
                 localIdentName: '[name]-[local]-[hash:base64:5]'
               },
-              sourceMap: isDevelopment,
             },
           },
+          {
+            loader: "sass-loader",
+            options: {
+              sourceMap: isDevelopment,
+              sassOptions: {
+                outputStyle: "expanded"
+              }
+            },
+          }
         ],
       },
       {

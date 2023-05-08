@@ -1,4 +1,4 @@
-import styles from "./demo.module.css";
+import styles from "./demo.module.scss";
 import React from "react";
 import ReactDOM from "react-dom";
 import { observer } from "mobx-react"

@@ -1,19 +1,22 @@
 {
   "name": "mobx-react-table-grid",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Easy to use and powerful react table-grid layout based on CSS-grid",
   "license": "MIT",
   "author": "ixrock",
   "scripts": {
-    "dev": "webpack serve --open",
-    "build": "NODE_ENV=production webpack",
+    "dev": "webpack serve --mode development --open",
+    "build": "npm run build:clean && npm run build-lib && npm run build-types",
+    "build-lib": "NODE_ENV=production webpack --mode production",
     "build-types": "tsc --project tsconfig-build-types.json",
-    "release-build": "npm run clean && npm run build && npm run build-types",
-    "clean": "rimraf dist/"
+    "build:clean": "rimraf dist/",
+    "release-pack": "npm run build && npm pack dist/src/table",
+    "release-publish": "npm run build && npm publish dist/src/table"
   },
   "main": "index.js",
   "types": "index.d.ts",
   "files": [
+    "index.css",
     "*.*(js|d.ts|.css|.json)"
   ],
   "repository": {
@@ -35,6 +38,8 @@
     "html-webpack-plugin": "^5.5.0",
     "mini-css-extract-plugin": "^2.7.5",
     "rimraf": "5.0.0",
+    "sass": "^1.62.1",
+    "sass-loader": "^13.2.2",
     "style-loader": "^3.3.2",
     "ts-loader": "^9.4.2",
     "ts-node": "^10.9.1",
@@ -51,8 +56,8 @@
     "mobx": "^6.9.0",
     "mobx-react": "^7.6.0",
     "react": "^17 || ^18",
-    "react-dom": "^17 || ^18",
     "react-dnd": "^15",
-    "react-dnd-html5-backend": "^15"
+    "react-dnd-html5-backend": "^15",
+    "react-dom": "^17 || ^18"
   }
 }

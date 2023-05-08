@@ -1,4 +1,4 @@
-import styles from "./table.module.css";
+import styles from "./table.module.scss";
 import React from "react";
 import { observer } from "mobx-react"
 import { TableDataColumn, TableColumn } from "./table-column";

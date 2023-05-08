@@ -3,7 +3,7 @@
 
 Easy to use and powerful react table-grid based on CSS-grid layout component
 
-## Install _(not released yet)_
+## Install
 ```
 npm install mobx-react-table-grid --save
 ```
@@ -38,11 +38,12 @@ npm run dev
 ## Example
 
 ```tsx
+import "mobx-react-table-grid/index.css"; // import styles (e.g. in webpack)
 import React from "react"
 import ReactDOM from "react-dom"
 import { observable } from "mobx"
 import { inject, observer } from "mobx-react"
-import { CreateTableState, createTableState, Table, bindAutoSaveChangesToStorage } from "./src/table";
+import { CreateTableState, createTableState, Table, bindAutoSaveChangesToStorage } from "mobx-react-table-grid";
 
 interface MyResourceDataType {
   name: string;
@@ -50,7 +51,7 @@ interface MyResourceDataType {
 };
 
 const tableState = createTableState<MyResourceDataType>({
-  /* some iterable data items , e.g. `k8s.Pod[]` */
+  /* some iterable data items , e.g. `K8s.Pod[]` */
   dataItems: observable.array<MyTableGridDataItem>(),
   
   headingColumns: [
@@ -82,7 +83,7 @@ const Demo = observer((props: {store: CreateTableState}) => {
  * Preload -> import -> auto-save table state changes with external storage, e.g. `window.localStorage`
  * @optional
  */
-await bindAutoSaveChangesToStorage<ResourceStub>({
+bindAutoSaveChangesToStorage<ResourceStub>({
   tableId: "demo",
   tableState: tableState,
   toStorage(tableId, state) {
@@ -91,8 +92,7 @@ await bindAutoSaveChangesToStorage<ResourceStub>({
   async fromStorage(tableId: string) {
     return JSON.parse(window.localStorage.getItem(tableId) ?? `{}`);
   }
+}).then(() => {
+  ReactDOM.render(<Demo store={tableState}/>, document.getElementById('app'));  
 });
-
-// Render app with last used state
-ReactDOM.render(<Demo store={tableState}/>, document.getElementById('app'));
 ```
