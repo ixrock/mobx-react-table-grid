@@ -1,5 +1,5 @@
 import type React from "react";
-import { action, computed, observable } from "mobx"
+import { action, computed, IComputedValue, observable } from "mobx"
 import type { TableColumnId, TableDataColumn, TableDataRow, TableRowId } from "./index";
 import orderBy from "lodash/orderBy";
 
@@ -7,7 +7,7 @@ export type CreatedTableState<DataItem> = ReturnType<typeof createTableState<Dat
 export type StorableCreateTableState<DataItem> = ReturnType<typeof toJSON<DataItem>>; /* plain json */
 
 export interface CreateTableStateParams<ResourceItem = any> {
-  dataItems: ResourceItem[];
+  dataItems: IComputedValue<ResourceItem[]>;
   /**
    * Columns definition as `Table.props.columns`.
    * Used to build `Table.props.rows` state.
@@ -65,7 +65,6 @@ export function createTableState<DataItem = any>({ headingColumns, dataItems, cu
     }
   });
 
-  const items = observable.box<DataItem[]>(dataItems);
   const searchText = observable.box("");
   const hiddenColumns = observable.set<TableColumnId>();
   const selectedRowsId = observable.set<TableRowId>();
@@ -84,7 +83,7 @@ export function createTableState<DataItem = any>({ headingColumns, dataItems, cu
   });
 
   const tableRows = computed<TableDataRow<DataItem>[]>(() => {
-    return items.get().map((resource, resourceIndex) => {
+    return dataItems.get().map((resource, resourceIndex) => {
       const row: TableDataRow = {
         get id() {
           return getRowId?.(resource)
@@ -163,7 +162,6 @@ export function createTableState<DataItem = any>({ headingColumns, dataItems, cu
   });
 
   return {
-    items,
     searchText,
     columnSizes,
     columnsOrder,

@@ -42,7 +42,7 @@ import "mobx-react-table-grid/index.css"; // import styles (e.g. via webpack)
 import React from "react"
 import ReactDOM from "react-dom"
 import { observable } from "mobx"
-import { inject, observer } from "mobx-react"
+import { observer } from "mobx-react"
 import { createTableState, Table } from "mobx-react-table-grid";
 
 interface ResourceItem {
@@ -52,18 +52,18 @@ interface ResourceItem {
 };
 
 const tableState = createTableState<ResourceItem>({
-  dataItems: [
+  dataItems: observable.box([
     {
-      name: "Joe", 
-      hobby: ["hacking", "martial-arts"], 
+      name: "Joe",
+      hobby: ["hacking", "martial-arts"],
       renderName(){ return <b>Joel White</b> },
-    }, 
+    },
     {
-      name: "Ann", 
-      hobby: ["dancing"], 
+      name: "Ann",
+      hobby: ["dancing"],
       renderName(){ return <b>Anna Dark</b> },
     }
-  ],
+  ]),
   headingColumns: [
     {
       id: "index",

@@ -10,7 +10,7 @@ export const tableId = "demo";
 
 export const tableState = createTableState<ResourceStub>({
   // some observable state from external stores, injectables, etc.
-  dataItems: observable.array(makeData(10_000)),
+  dataItems: observable.box(makeData(10_000)),
 
   // heading columns and data-accessors definitions
   headingColumns: [
