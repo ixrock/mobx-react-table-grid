@@ -11,6 +11,8 @@ import { tableHeaderRowId, tableTheadRowId } from "./table-constants";
 export interface TableProps<DataItem = any> {
   id?: string;
   className?: string;
+  headerClassName?: string;
+  theadClassName?: string;
   style?: React.CSSProperties;
   /**
    * Table's header html block.
@@ -64,6 +66,8 @@ export const Table = observer((props: TableProps) => {
     rows = [],
     columns = [],
     children,
+    headerClassName,
+    theadClassName,
   } = props;
 
   const rowVirtualizer = useVirtualizer({
@@ -90,14 +94,14 @@ export const Table = observer((props: TableProps) => {
         {header && (
           <TableRow
             id={tableHeaderRowId}
-            className={styles.header}
+            className={`${styles.header} ${headerClassName ?? ""}`}
             columns={[{ id: "header", title: header }]}
             data={null}
           />
         )}
         <TableRow
           id={tableTheadRowId}
-          className={styles.thead}
+          className={`${styles.thead} ${theadClassName ?? ""}`}
           columns={columns}
           data={null}
         />
