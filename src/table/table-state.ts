@@ -65,6 +65,7 @@ export function createTableState<DataItem = any>({ headingColumns, dataItems, cu
     }
   });
 
+  const items = observable.box<DataItem[]>(dataItems);
   const searchText = observable.box("");
   const hiddenColumns = observable.set<TableColumnId>();
   const selectedRowsId = observable.set<TableRowId>();
@@ -83,7 +84,7 @@ export function createTableState<DataItem = any>({ headingColumns, dataItems, cu
   });
 
   const tableRows = computed<TableDataRow<DataItem>[]>(() => {
-    return dataItems.map((resource, resourceIndex) => {
+    return items.get().map((resource, resourceIndex) => {
       const row: TableDataRow = {
         get id() {
           return getRowId?.(resource)
@@ -162,6 +163,7 @@ export function createTableState<DataItem = any>({ headingColumns, dataItems, cu
   });
 
   return {
+    items,
     searchText,
     columnSizes,
     columnsOrder,
