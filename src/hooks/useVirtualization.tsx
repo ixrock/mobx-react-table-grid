@@ -1,5 +1,7 @@
+// TODO: get rid of `@tanstack/react-virtual`
+// FIXME: allow <TableRow/> to use `display:contents` => what means to use single css-grid for all rows (heading/data)
 import React, { useEffect, useState } from "react";
-import type { TableDataRow } from "../table/table-row";
+import type { TableDataRow } from "../table";
 
 export interface VirtualizationOptions {
   scrollableElemRef: React.RefObject<HTMLElement>;
@@ -14,7 +16,6 @@ export interface VirtualizedRow {
   row: TableDataRow;
 }
 
-// TODO: get rid of `@tanstack/react-virtual` and better support css-grid (without wrapping each <TableRow/> into own div)
 export function useVirtualization(options: VirtualizationOptions): VirtualizedRow[] {
   const {scrollableElemRef,/* approxRowHeight = 50, rows*/} = options;
   const [visibleRows/*, setVisibleRows*/] = useState<VirtualizedRow[]>([]);

@@ -1,7 +1,7 @@
 @ixrock/mobx-react-table-grid
 ==
 
-Easy to use and powerful react table-grid based on CSS-grid layout component
+Easy to use and powerful table grid React-js component based on CSS-grid 
 
 ## Install
 ```
@@ -38,22 +38,32 @@ npm run dev
 ## Example
 
 ```tsx
-import "mobx-react-table-grid/index.css"; // import styles (e.g. in webpack)
+import "mobx-react-table-grid/index.css"; // import styles (e.g. via webpack)
 import React from "react"
 import ReactDOM from "react-dom"
 import { observable } from "mobx"
 import { inject, observer } from "mobx-react"
-import { CreateTableState, createTableState, Table, bindAutoSaveChangesToStorage } from "mobx-react-table-grid";
+import { createTableState, Table } from "mobx-react-table-grid";
 
-interface MyResourceDataType {
+interface ResourceItem {
   name: string;
+  hobby: string[];
   renderName(): React.ReactNode;
 };
 
-const tableState = createTableState<MyResourceDataType>({
-  /* some iterable data items , e.g. `K8s.Pod[]` */
-  dataItems: observable.array<MyTableGridDataItem>(),
-  
+const tableState = createTableState<ResourceItem>({
+  dataItems: [
+    {
+      name: "Joe", 
+      hobby: ["hacking", "martial-arts"], 
+      renderName(){ return <b>Joel White</b> },
+    }, 
+    {
+      name: "Ann", 
+      hobby: ["dancing"], 
+      renderName(){ return <b>Anna Dark</b> },
+    }
+  ],
   headingColumns: [
     {
       id: "index",
@@ -63,36 +73,27 @@ const tableState = createTableState<MyResourceDataType>({
     {
       id: ResourceColumnId.name,
       title: <>Name</>,
-      renderValue: (row, col) => <b>{row.data.renderName()}</b>,
+      renderValue: (row, col) => row.data.renderName(),
       sortValue: (row, col) => row.data.name,
+    },
+    {
+      id: ResourceColumnId.hobby,
+      title: <>Name</>,
+      renderValue: (row, col) => <b>{row.data.hobby.join(", ")}</b>,
+      sortValue: (row, col) => row.data.hobby.join(""),
+      searchValue: (row, col) => row.data.hobby.join(" "),
     },
   ]
 });
 
-const Demo = observer((props: {store: CreateTableState}) => {
-  const { tableColumns, sortedTableRows } = props.store;
-
-  return <Table
-    header={<b>Table Header</b>}
-    columns={tableColumns.get()}
-    rows={sortedTableRows.get()}
+const Demo = observer(() => {
+  const { tableColumns, sortedTableRows } = tableState;
+  
+  return <Table 
+    columns={tableColumns.get()} 
+    rows={sortedTableRows.get()} 
   />
 });
 
-/**
- * Preload -> import -> auto-save table state changes with external storage, e.g. `window.localStorage`
- * @optional
- */
-bindAutoSaveChangesToStorage<ResourceStub>({
-  tableId: "demo",
-  tableState: tableState,
-  toStorage(tableId, state) {
-    window.localStorage.setItem(tableId, JSON.stringify(state));
-  },
-  async fromStorage(tableId: string) {
-    return JSON.parse(window.localStorage.getItem(tableId) ?? `{}`);
-  }
-}).then(() => {
-  ReactDOM.render(<Demo store={tableState}/>, document.getElementById('app'));  
-});
+ReactDOM.render(<Demo/>, document.getElementById('app'));
 ```

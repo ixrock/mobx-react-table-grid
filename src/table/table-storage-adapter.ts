@@ -6,7 +6,7 @@ export interface BindAutoSaveToStorageParams<DataItem> {
   tableState: CreatedTableState<DataItem>;
   savingDelay?: number;
   fromStorage(tableId: string): Promise<StorableCreateTableState<DataItem>>; // preload
-  toStorage(tableId: string, state: StorableCreateTableState<DataItem>): unknown; // store
+  toStorage(tableId: string, state: StorableCreateTableState<DataItem>): Promise<void>; // store
 }
 
 export async function bindAutoSaveChangesToStorage<DataItem>(

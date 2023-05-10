@@ -143,7 +143,7 @@ export const Demo = observer((props: { id?: string, store: CreatedTableState<Res
  */
 bindAutoSaveChangesToStorage<ResourceStub>({
   tableId, tableState,
-  toStorage(tableId, state) {
+  async toStorage(tableId, state) {
     console.log(`[SAVING STATE]: id=${tableId}`, state);
     window.localStorage.setItem(tableId, JSON.stringify(state));
   },
