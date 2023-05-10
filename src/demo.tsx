@@ -48,6 +48,7 @@ export const tableState = createTableState<ResourceStub>({
       id: ResourceColumnId.node,
       title: <>Node</>,
       renderValue: (row) => row.data.getNode(),
+      minSize: 100,
     },
     {
       id: ResourceColumnId.qos,

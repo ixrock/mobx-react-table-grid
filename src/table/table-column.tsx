@@ -24,6 +24,11 @@ export interface TableDataColumn<DataItem = any> {
    */
   size?: string;
   /**
+   * Min-size of the column (width), that can be resized to it manually
+   * @default 50px
+   */
+  minSize?: number;
+  /**
    * Defines if specific column could be resized by `width`
    * default: true
    */
@@ -86,6 +91,7 @@ export const TableColumn = observer((columnProps: TableColumnProps) => {
     id: columnId,
     className = "", title, style, parentRow, sortingOrder,
     sortable = true, draggable = true, resizable = true,
+    minSize = 50,
   } = columnProps;
 
   const isHeadingRow = parentRow.id === tableTheadRowId;
@@ -160,7 +166,7 @@ export const TableColumn = observer((columnProps: TableColumnProps) => {
 
       columnProps.onResizing?.({
         columnId, offsetX, offsetY,
-        size: columnWidth + offsetX,
+        size: Math.max(minSize, columnWidth + offsetX),
       }, evt);
     };
 
