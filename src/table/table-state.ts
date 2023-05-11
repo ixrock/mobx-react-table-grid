@@ -118,10 +118,12 @@ export function createTableState<DataItem = any>(params: CreateTableStateParams<
           },
           ...customizedRow, // allow to override "selected" but not "onSelect"
           onSelect: action((row: TableDataRow<DataItem>, evt: React.MouseEvent) => {
-            if (selectedRowsId.has(row.id)) {
-              selectedRowsId.delete(row.id);
-            } else {
-              selectedRowsId.add(row.id);
+            if (row.selectable) {
+              if (selectedRowsId.has(row.id)) {
+                selectedRowsId.delete(row.id);
+              } else {
+                selectedRowsId.add(row.id);
+              }
             }
             customizedRow.onSelect?.(customRow, evt);
           }),

@@ -32,9 +32,9 @@ export const TableRow = observer((rowProps: TableRowProps) => {
     selected ? [styles.selectedRow, classes.selectedRow] : [],
   ].flat().join(" ") : "";
 
-  const onSelect = selectable ? (evt: React.MouseEvent) => {
+  const onSelect = (evt: React.MouseEvent) => {
     parentRow.onSelect?.(parentRow, evt);
-  } : undefined;
+  };
 
   return (
     <div className={`${styles.row} ${className} ${selectableClassName}`} onClick={onSelect} style={style}>
