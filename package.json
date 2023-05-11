@@ -1,6 +1,6 @@
 {
   "name": "mobx-react-table-grid",
-  "version": "1.0.5",
+  "version": "1.0.6",
   "description": "Easy to use and powerful react table-grid layout based on CSS-grid",
   "license": "MIT",
   "author": "ixrock",
@@ -9,15 +9,15 @@
     "build": "npm run build:clean && npm run build-lib && npm run build-types",
     "build-lib": "NODE_ENV=production webpack --mode production",
     "build-types": "tsc --project tsconfig-build-types.json",
-    "build:clean": "rimraf dist/",
-    "release-pack": "npm run build && npm pack dist/src/table",
-    "release-publish": "npm run build && npm publish dist/src/table"
+    "build:clean": "rimraf ./dist/",
+    "release-pack": "npm run build && npm pack ./dist",
+    "release-publish": "npm run build && npm publish ./dist"
   },
   "main": "index.js",
-  "types": "index.d.ts",
+  "types": "types/index.d.ts",
   "files": [
-    "index.css",
-    "*.*(js|d.ts|.css|.json)"
+    "types",
+    "*.*"
   ],
   "repository": {
     "type": "git",

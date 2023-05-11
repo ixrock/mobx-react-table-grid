@@ -29,7 +29,7 @@ module.exports = {
   devtool: "source-map",
   externals: isDevelopment ? [] : externals, // exclude bundling with lib "react", "mobx", etc.
   output: {
-    path: path.resolve(__dirname, 'dist/src/table'),
+    path: path.resolve(__dirname, isDevelopment ? "dev" : "dist"),
     filename: '[name].js',
     libraryTarget: "this",
     library: {

@@ -1,5 +1,5 @@
 import type React from "react";
-import { action, computed, IComputedValue, observable } from "mobx"
+import { action, computed, IComputedValue, IObservableValue, observable } from "mobx"
 import type { TableColumnId, TableDataColumn, TableDataRow, TableRowId } from "./index";
 import orderBy from "lodash/orderBy";
 
@@ -22,10 +22,17 @@ export interface CreateTableStateParams<ResourceItem = any> {
    * By default, tries to get unique ID via `dataItem.getById()` or `dataItem.id`
    */
   getRowId?: (dataItem: ResourceItem) => TableRowId;
+  /**
+   * Handle filtering results with search field
+   * mobx.computed() or mobx.observable.box() that participates in filtered rows state.
+   */
+  searchBox?: IComputedValue<string> | IObservableValue<string>;
 }
 
-export function createTableState<DataItem = any>({ headingColumns, dataItems, customizeRows, getRowId }: CreateTableStateParams<DataItem>) {
-  let tableColumnsAll: TableDataColumn<DataItem>[] = headingColumns.map((headColumn) => {
+export function createTableState<DataItem = any>(params: CreateTableStateParams<DataItem>) {
+  const { headingColumns, dataItems, customizeRows, getRowId, searchBox } = params;
+
+  const tableColumnsAll: TableDataColumn<DataItem>[] = headingColumns.map((headColumn) => {
     return {
       // copy heading columns definition
       ...headColumn,
@@ -65,7 +72,7 @@ export function createTableState<DataItem = any>({ headingColumns, dataItems, cu
     }
   });
 
-  const searchText = observable.box("");
+  const searchText = searchBox ?? observable.box("");
   const hiddenColumns = observable.set<TableColumnId>();
   const selectedRowsId = observable.set<TableRowId>();
   const sortedColumns = observable.map<TableColumnId, "asc" | "desc">();
