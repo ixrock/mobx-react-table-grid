@@ -10,7 +10,7 @@
   --grid-thead-bgc: rgba(255, 255, 255, .9);
   --grid-spacing: 8px;
   --grid-resizer-width: 20px;
-  --grid-resizing-color: rgba(255, 255, 255, .50);
+  --grid-resizing-color: rgba(0, 0, 0, .5);
 
   position: relative;
   display: grid;
@@ -49,7 +49,7 @@
   display: grid; /* ignore element as direct css-grid child */
   grid-template-columns: inherit;
   transition: background-color ease-in-out .35s;
-  align-items: center;
+  align-items: baseline;
   gap: inherit;
 
   &:not(.thead):hover {
@@ -59,12 +59,9 @@
 
 .column {
   padding: var(--grid-spacing);
-
-  .title {
-    overflow: hidden;
-    text-overflow: ellipsis;
-    flex: 1 0;
-  }
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .thead {
@@ -73,8 +70,12 @@
   z-index: 1;
   color: #000;
   height: min-content;
-  align-items: baseline;
   background: var(--grid-thead-bgc);
+
+  .title {
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
 
   > .column {
     position: relative;
@@ -98,11 +99,6 @@
   &:empty {
     display: none !important;
   }
-}
-
-.sortable {
-  cursor: pointer;
-  transition: background-color .5s ease-out;
 }
 
 .arrowUp {
@@ -129,12 +125,18 @@
   right: 0;
   width: var(--grid-resizer-width);
   height: var(--grid-virtual-max-height, 100%);
-  background: linear-gradient(180deg, var(--grid-resizing-color), black) 50% repeat-y;
+  background: linear-gradient(180deg, var(--grid-resizing-color), transparent) 50% repeat-y;
   background-size: 1px;
   transition: background-color .15s;
   cursor: col-resize;
   z-index: 10;
   display: none;
+}
+
+/* re-ordering heading columns with d&d */
+.sortable {
+  cursor: pointer;
+  transition: background-color .5s ease-out;
 }
 
 .isDragging {
@@ -149,11 +151,12 @@
   opacity: 1;
 }
 
+/* selecting rows (e.g. on click) */
 .selectable {
   cursor: pointer;
 }
 
-.selectedRow {
+.selected {
   color: var(--grid-row-selected-color);
   background-color: var(--grid-row-selected-bgc);
 }

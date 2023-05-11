@@ -56,6 +56,8 @@ export interface TableProps<DataItem = any> {
 export interface TableClassNames {
   headerClass?: string;
   theadClass?: string;
+  rowBaseClass?: string;
+  columnBaseClass?: string;
   resizableColumn?: string;
   sortableColumn?: string;
   draggableColumn?: string;
@@ -123,11 +125,10 @@ export const Table = observer((props: TableProps) => {
           return (
             <TableRow
               {...row}
+              classes={classes}
               key={virtualRow.key}
               id={virtualRow.key}
               index={virtualRow.index}
-              className={`${styles.row} ${row.className ?? ""}`}
-              classes={classes}
               style={{
                 ...row.style,
                 position: "absolute",

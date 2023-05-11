@@ -145,10 +145,12 @@ export const TableColumn = observer((columnProps: TableColumnProps) => {
   ] : [];
 
   const columnClassName = [
-    styles.column, className,
+    styles.column,
+    !isHeadingRow ? classes.columnBaseClass : "",
     isResizingEnabled && classes.resizableColumn,
     ...draggableClasses,
     ...sortableClasses,
+    className,
   ].filter(Boolean).join(" ");
 
   // debouncing for checking drag&drop event firing state before sorting anything out ;)
@@ -215,13 +217,16 @@ export const TableColumn = observer((columnProps: TableColumnProps) => {
       onDragStart={onDragStart} onDragEnd={onDragEnd} onMouseDown={onSorting}
       ref={elem => dropRef?.(dragRef(elem))}
     >
-      {isHeadingRow && sortable && sortingArrowClass && <i className={sortingArrowClass}/>}
-      <div className={styles.title}>
-        {title}
-      </div>
-      {isHeadingRow && resizable && (
-        <i className={styles.resizable} onMouseDown={onResizeStart} onDoubleClick={onResizeReset}/>
+      {isHeadingRow && (
+        <>
+          {sortable && sortingArrowClass && <i className={sortingArrowClass}/>}
+          <div className={styles.title}>
+            {title}
+          </div>
+          {resizable && <i className={styles.resizable} onMouseDown={onResizeStart} onDoubleClick={onResizeReset}/>}
+        </>
       )}
+      {!isHeadingRow && title}
     </div>
   )
 });

@@ -3,6 +3,7 @@ import React from "react";
 import { observer } from "mobx-react"
 import { TableDataColumn, TableColumn } from "./table-column";
 import type { TableClassNames } from "./table";
+import { tableTheadRowId } from "./table-constants";
 
 export type TableRowId = string | number | symbol;
 
@@ -23,27 +24,35 @@ export interface TableRowProps extends TableDataRow {
 }
 
 export const TableRow = observer((rowProps: TableRowProps) => {
-  const parentRow = { ...rowProps };
+  const currentRow = { ...rowProps };
   const { className = "", style = {}, columns, selectable, selected, classes = {} } = rowProps;
+  const isHeadingRow = currentRow.id === tableTheadRowId;
 
   const selectableClassName: string = selectable ? [
     styles.selectable,
     classes.selectableRow,
-    selected ? [styles.selectedRow, classes.selectedRow] : [],
-  ].flat().join(" ") : "";
+    selected ? [styles.selected, classes.selectedRow] : [],
+  ].flat().filter(Boolean).join(" ") : "";
+
+  const rowClassName: string = [
+    styles.row,
+    !isHeadingRow ? classes.rowBaseClass : "",
+    selectableClassName,
+    className,
+  ].filter(Boolean).join(" ");
 
   const onSelect = (evt: React.MouseEvent) => {
-    parentRow.onSelect?.(parentRow, evt);
+    currentRow.onSelect?.(currentRow, evt);
   };
 
   return (
-    <div className={`${styles.row} ${className} ${selectableClassName}`} onClick={onSelect} style={style}>
+    <div className={rowClassName} style={style} onClick={onSelect}>
       {columns.map(columnData => {
         return (
           <TableColumn
             {...columnData}
             key={columnData.id}
-            parentRow={parentRow}
+            parentRow={currentRow}
             classes={classes}
           />
         )

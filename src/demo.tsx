@@ -17,14 +17,12 @@ export const tableState = createTableState<ResourceStub>({
     {
       id: "index",
       title: <b>#</b>,
-      resizable: false, // column size is fixed (see: `.demoTable` css-class)
       className: styles.indexColumn,
       renderValue: (row) => row.index,
     },
     {
       id: ResourceColumnId.name,
       title: <>Name</>,
-      draggable: false, // keeps fixed position in grid, not possible to re-order
       renderValue: (row) => row.data.getName(),
     },
     {
@@ -41,7 +39,10 @@ export const tableState = createTableState<ResourceStub>({
     {
       id: ResourceColumnId.restarts,
       title: <>Restarts</>,
+      className: styles.restartsColumn,
+      minSize: 100, // px
       resizable: false, // column size is fixed (see: `demo.module.css`)
+      draggable: false, // column position is fixed in gird (d&d is off)
       renderValue: (row) => row.data.getRestarts()
     },
     {
@@ -65,7 +66,7 @@ export const tableState = createTableState<ResourceStub>({
     {
       id: ResourceColumnId.age,
       title: <>Age</>,
-      renderValue: (row) => row.data.getAge()
+      renderValue: (row) => new Date(row.data.getAge()).toLocaleString()
     },
   ],
   customizeRows() {
@@ -128,12 +129,13 @@ export const Demo = observer((props: { id?: string, store: CreatedTableState<Res
 
       <Table
         id={tableId}
-        paddingStart={30}
-        rowSize={50}
+        paddingStart={40}
+        rowSize={40}
         className={styles.demoTable}
         header={<b>Table Header</b>}
         columns={tableColumns.get()}
         rows={searchResultTableRows.get()}
+        classes={{ columnBaseClass: styles.column }}
       />
     </>
   );

@@ -13,14 +13,23 @@
 
 .demoTable {
   --grid-col-size-index: max-content;
-  --grid-col-size-restarts: 100px;
+  --grid-col-size-restarts: minmax(100px, 1fr);
 
   border: 1px solid currentColor;
   border-radius: 3px;
 }
 
-.indexColumn {
-  filter: contrast(1000%);
+.restartsColumn {
+  text-align: center;
+  place-content: center;
+}
+
+.column {
+  transition: all 250ms ease;
+
+  &:hover {
+    color: white;
+  }
 }
 
 body {
