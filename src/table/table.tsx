@@ -11,8 +11,7 @@ import { tableHeaderRowId, tableTheadRowId } from "./table-constants";
 export interface TableProps<DataItem = any> {
   id?: string;
   className?: string;
-  headerClassName?: string;
-  theadClassName?: string;
+  classes?: TableClassNames;
   style?: React.CSSProperties;
   /**
    * Table's header html block.
@@ -54,11 +53,25 @@ export interface TableProps<DataItem = any> {
   children?: React.ReactNode;
 }
 
+export interface TableClassNames {
+  headerClass?: string;
+  theadClass?: string;
+  resizableColumn?: string;
+  sortableColumn?: string;
+  draggableColumn?: string;
+  draggableColumnActive?: string;
+  droppableColumn?: string;
+  droppableColumnActive?: string;
+  selectableRow?: string;
+  selectedRow?: string;
+}
+
 export const Table = observer((props: TableProps) => {
   const tableElemRef = React.useRef<HTMLDivElement>(null);
   const {
     className = "",
     style = {},
+    classes = {},
     paddingStart = 0,
     rowSize = 50,
     overscan = 10,
@@ -66,8 +79,6 @@ export const Table = observer((props: TableProps) => {
     rows = [],
     columns = [],
     children,
-    headerClassName,
-    theadClassName,
   } = props;
 
   const rowVirtualizer = useVirtualizer({
@@ -94,15 +105,17 @@ export const Table = observer((props: TableProps) => {
         {header && (
           <TableRow
             id={tableHeaderRowId}
-            className={`${styles.header} ${headerClassName ?? ""}`}
+            className={`${styles.header} ${classes.headerClass ?? ""}`}
             columns={[{ id: "header", title: header }]}
+            classes={classes}
             data={null}
           />
         )}
         <TableRow
           id={tableTheadRowId}
-          className={`${styles.thead} ${theadClassName ?? ""}`}
+          className={`${styles.thead} ${classes.theadClass ?? ""}`}
           columns={columns}
+          classes={classes}
           data={null}
         />
         {virtualRows.map(virtualRow => {
@@ -114,6 +127,7 @@ export const Table = observer((props: TableProps) => {
               id={virtualRow.key}
               index={virtualRow.index}
               className={`${styles.row} ${row.className ?? ""}`}
+              classes={classes}
               style={{
                 ...row.style,
                 position: "absolute",

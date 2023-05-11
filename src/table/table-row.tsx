@@ -2,6 +2,7 @@ import styles from "./table.module.scss";
 import React from "react";
 import { observer } from "mobx-react"
 import { TableDataColumn, TableColumn } from "./table-column";
+import type { TableClassNames } from "./table";
 
 export type TableRowId = string | number | symbol;
 
@@ -18,22 +19,35 @@ export interface TableDataRow<DataItem = any> {
 }
 
 export interface TableRowProps extends TableDataRow {
+  classes?: TableClassNames;
 }
 
 export const TableRow = observer((rowProps: TableRowProps) => {
-  const { className = "", style = {}, columns, selectable, selected } = rowProps;
-  const selectableClassName = selectable ? styles.selectable : "";
-  const selectedClassName = selectable && selected ? styles.selectedRow : "";
-  const rowClassName = `${styles.row} ${className} ${selectableClassName} ${selectedClassName}`;
   const parentRow = { ...rowProps };
+  const { className = "", style = {}, columns, selectable, selected, classes = {} } = rowProps;
+
+  const selectableClassName: string = selectable ? [
+    styles.selectable,
+    classes.selectableRow,
+    selected ? [styles.selectedRow, classes.selectedRow] : [],
+  ].flat().join(" ") : "";
 
   const onSelect = selectable ? (evt: React.MouseEvent) => {
     parentRow.onSelect?.(parentRow, evt);
   } : undefined;
 
   return (
-    <div className={rowClassName} onClick={onSelect} style={style}>
-      {columns.map(columnData => <TableColumn {...columnData} parentRow={parentRow} key={columnData.id}/>)}
+    <div className={`${styles.row} ${className} ${selectableClassName}`} onClick={onSelect} style={style}>
+      {columns.map(columnData => {
+        return (
+          <TableColumn
+            {...columnData}
+            key={columnData.id}
+            parentRow={parentRow}
+            classes={classes}
+          />
+        )
+      })}
     </div>
   )
 });

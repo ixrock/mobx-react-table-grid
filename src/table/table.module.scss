@@ -1,15 +1,20 @@
 
 .table {
+  /* default "auto"-size for all columns */
   --grid-col-size: minmax(50px, 1fr);
-  --grid-spacing: var(--grid-gap, 8px);
+
   --grid-row-highlight-bgc: #000000aa;
   --grid-row-selected-bgc: #3d90ce;
   --grid-row-selected-color: white;
+  --grid-header-bgc: rgba(0, 0, 0, .75);
+  --grid-thead-bgc: rgba(255, 255, 255, .9);
+  --grid-spacing: 8px;
+  --grid-resizer-width: 20px;
+  --grid-resizing-color: rgba(255, 255, 255, .50);
 
   position: relative;
   display: grid;
   grid-template-columns: var(--grid-cols);
-  gap: var(--grid-gap);
   flex: 1;
   height: var(--grid-height);
   width: 100%;
@@ -34,7 +39,7 @@
   height: min-content;
   grid-column: 1 / -1; /* merge contents for all columns within a row */
   text-align: center;
-  background: rgba(0, 0, 0, .75);
+  background: var(--grid-header-bgc);
   z-index: 1;
 }
 
@@ -45,6 +50,7 @@
   grid-template-columns: inherit;
   transition: background-color ease-in-out .35s;
   align-items: center;
+  gap: inherit;
 
   &:not(.thead):hover {
     background: var(--grid-row-highlight-bgc);
@@ -68,13 +74,13 @@
   color: #000;
   height: min-content;
   align-items: center;
+  background: var(--grid-thead-bgc);
 
   > .column {
     position: relative;
     display: flex;
     user-select: none;
     overflow: visible;
-    background: rgba(255, 255, 255, .9);
     transition: opacity ease-out 250ms;
 
     &:not(.draggable) {
@@ -84,8 +90,7 @@
 
     &:hover {
       .resizable {
-        border-right-width: var(--grid-resizer, 1px);
-        padding-right: var(--grid-resizer-width, 20px); /* add invisible extra space to grab resizer */
+        display: block;
       }
     }
   }
@@ -98,10 +103,6 @@
 .sortable {
   cursor: pointer;
   transition: background-color .5s ease-out;
-
-  &:hover {
-    background: silver;
-  }
 }
 
 .arrowUp {
@@ -126,11 +127,14 @@
   position: absolute;
   top: 0;
   right: 0;
+  width: var(--grid-resizer-width);
   height: var(--grid-virtual-max-height, 100%);
-  border-right: 0 solid var(--grid-resizer-color, #ffffff90);
+  background: linear-gradient(180deg, var(--grid-resizing-color), black) 50% repeat-y;
+  background-size: 1px;
+  transition: background-color .15s;
   cursor: col-resize;
-  transition: border .15s;
   z-index: 10;
+  display: none;
 }
 
 .isDragging {
@@ -138,10 +142,10 @@
 }
 
 .isDroppable {
-  opacity: .75;
+  opacity: .5;
 }
 
-.isDraggingOverActiveDroppable {
+.isDropReady {
   opacity: 1;
 }
 
@@ -150,6 +154,6 @@
 }
 
 .selectedRow {
-  color: var(--grid-row-selected-color) !important;
-  background-color: var(--grid-row-selected-bgc) !important;
+  color: var(--grid-row-selected-color);
+  background-color: var(--grid-row-selected-bgc);
 }

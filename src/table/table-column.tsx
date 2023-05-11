@@ -1,6 +1,7 @@
 import styles from "./table.module.scss";
 import React from "react";
 import { observer } from "mobx-react"
+import type { TableClassNames } from "./table";
 import type { TableDataRow } from "./table-row";
 import { useDrag, useDrop } from "react-dnd";
 import { tableColumnSortableType, tableTheadRowId } from "./table-constants";
@@ -83,22 +84,23 @@ export interface TableDataColumn<DataItem = any> {
 }
 
 export interface TableColumnProps extends TableDataColumn {
+  classes?: TableClassNames;
   parentRow: TableDataRow;
 }
 
 export const TableColumn = observer((columnProps: TableColumnProps) => {
   const {
     id: columnId,
-    className = "", title, style, parentRow, sortingOrder,
+    className, title, style, parentRow, sortingOrder,
     sortable = true, draggable = true, resizable = true,
-    minSize = 50,
+    minSize = 50, classes = {},
   } = columnProps;
 
   const isHeadingRow = parentRow.id === tableTheadRowId;
   const sortingArrowClass = sortable && sortingOrder === "asc" ? styles.arrowUp : sortingOrder === "desc" ? styles.arrowDown : "";
-  const isDraggableEnabled = isHeadingRow && draggable; // use only in "thead"
-  const isSortableEnabled = isHeadingRow && sortable; // use only in "thead"
-  const isResizingEnabled = isHeadingRow && resizable; // use only in "thead"
+  const isDraggableEnabled = isHeadingRow && draggable;
+  const isSortableEnabled = isHeadingRow && sortable;
+  const isResizingEnabled = isHeadingRow && resizable;
   const columnDataItemCopy = { ...columnProps };
   const resizeStartOffset = { x: 0, y: 0 };
   let isDragging = false;
@@ -108,7 +110,7 @@ export const TableColumn = observer((columnProps: TableColumnProps) => {
     item: columnDataItemCopy,
     collect(monitor) {
       return {
-        [styles.isDragging]: monitor.isDragging(),
+        [`${styles.isDragging} ${classes.draggableColumnActive ?? ""}`]: monitor.isDragging(),
       }
     },
   }) : [];
@@ -124,20 +126,30 @@ export const TableColumn = observer((columnProps: TableColumnProps) => {
     },
     collect(monitor) {
       return {
-        [styles.isDraggingOverActiveDroppable]: monitor.isOver(),
-        [styles.isDroppable]: monitor.canDrop(),
+        [`${styles.isDroppable} ${classes.droppableColumn ?? ""}`]: monitor.canDrop(),
+        [`${styles.isDropReady} ${classes.droppableColumnActive ?? ""}`]: monitor.isOver(),
       }
     },
   }) : [];
 
-  const draggableClass = isDraggableEnabled ? [
+  const draggableClasses = isDraggableEnabled ? [
     styles.draggable,
-    ...Object.entries(dragMetrics ?? {}).filter(([param, enabled]) => enabled).map(([param]) => param),
-    ...Object.entries(dropMetrics ?? {}).filter(([param, enabled]) => enabled).map(([param]) => param),
-  ].join(" ") : '';
+    classes.draggableColumn,
+    ...Object.entries(dragMetrics ?? {}).filter(([, enabled]) => enabled).map(([className]) => className.trim()),
+    ...Object.entries(dropMetrics ?? {}).filter(([, enabled]) => enabled).map(([className]) => className.trim()),
+  ] : [];
 
-  const sortableClassName = isSortableEnabled ? styles.sortable : "";
-  const columnClassName = `${styles.column} ${className} ${sortableClassName} ${draggableClass}`;
+  const sortableClasses = isSortableEnabled ? [
+    styles.sortable,
+    classes.sortableColumn,
+  ] : [];
+
+  const columnClassName = [
+    styles.column, className,
+    isResizingEnabled && classes.resizableColumn,
+    ...draggableClasses,
+    ...sortableClasses,
+  ].filter(Boolean).join(" ");
 
   // debouncing for checking drag&drop event firing state before sorting anything out ;)
   const onSorting = isSortableEnabled ? debounce((evt: React.MouseEvent) => {
