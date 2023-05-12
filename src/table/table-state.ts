@@ -33,13 +33,11 @@ export function createTableState<DataItem = any>(params: CreateTableStateParams<
   const { headingColumns, dataItems, customizeRows, getRowId, searchBox } = params;
 
   const tableColumnsAll: TableDataColumn<DataItem>[] = headingColumns.map((headColumn) => {
-    return {
-      // copy heading columns definition
-      ...headColumn,
-
-      // sorting columns state
+    const dataColumn = {} as TableDataColumn<DataItem>;
+    const columnDescriptorsInitial = Object.getOwnPropertyDescriptors(headColumn);
+    const columnDescriptorsStateManagement = Object.getOwnPropertyDescriptors({
       get sortingOrder() {
-        return sortedColumns.get(headColumn.id);
+        return sortedColumns.get(headColumn.id); // current sorting columns state
       },
       onSorting: action((row, column, evt) => {
         const order = sortedColumns.get(column.id);
@@ -69,7 +67,13 @@ export function createTableState<DataItem = any>(params: CreateTableStateParams<
       onResizeReset: action(({ columnId }) => {
         columnSizes.delete(columnId);
       }),
-    }
+    } as Partial<TableDataColumn<DataItem>>);
+
+    // don't call any getters at early stage (e.g. `get title(): ReactNode`)
+    return Object.defineProperties(dataColumn, {
+      ...columnDescriptorsInitial,
+      ...columnDescriptorsStateManagement,
+    });
   });
 
   const searchText = searchBox ?? observable.box("");
