@@ -29,9 +29,9 @@ export const TableRow = observer((rowProps: TableRowProps) => {
   const isHeadingRow = currentRow.id === tableTheadRowId;
 
   const selectableClassName: string = selectable ? [
-    styles.selectable,
+    styles.isSelectable,
     classes.selectableRow,
-    selected ? [styles.selected, classes.selectedRow] : [],
+    selected ? [styles.selectedRow, classes.selectedRow] : [],
   ].flat().filter(Boolean).join(" ") : "";
 
   const rowClassName: string = [

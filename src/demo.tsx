@@ -49,7 +49,6 @@ export const tableState = createTableState<ResourceStub>({
       id: ResourceColumnId.node,
       title: <>Node</>,
       renderValue: (row) => row.data.getNode(),
-      minSize: 100,
     },
     {
       id: ResourceColumnId.qos,
@@ -60,8 +59,8 @@ export const tableState = createTableState<ResourceStub>({
       id: ResourceColumnId.status,
       title: <>Status</>,
       renderValue: (row) => renderStatus(row.data.getStatus()),
-      sortValue: (row) => row.data.getStatus(),
-      searchValue: (row) => row.data.getStatus(), // to make this column searchable *we must* specify this callback cause `renderValue()` returns non-`string` ReactNode
+      sortValue: (row) => row.data.getStatus(), // to make sorting results right in case when `renderValue()` returns non-simple `ReactNode` (e.g. not a `string`)
+      searchValue: (row) => row.data.getStatus(), // to make this column searchable *we must* specify this when `renderValue()` returns complex `ReactNode`
     },
     {
       id: ResourceColumnId.age,

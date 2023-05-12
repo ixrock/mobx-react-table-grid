@@ -6,6 +6,7 @@ import type { TableDataRow } from "./table-row";
 import { useDrag, useDrop } from "react-dnd";
 import { tableColumnSortableType, tableTheadRowId } from "./table-constants";
 import debounce from "lodash/debounce";
+import throttle from "lodash/throttle";
 
 /**
  * Unique ID for every column in grid
@@ -133,14 +134,14 @@ export const TableColumn = observer((columnProps: TableColumnProps) => {
   }) : [];
 
   const draggableClasses = isDraggableEnabled ? [
-    styles.draggable,
+    styles.isDraggable,
     classes.draggableColumn,
     ...Object.entries(dragMetrics ?? {}).filter(([, enabled]) => enabled).map(([className]) => className.trim()),
     ...Object.entries(dropMetrics ?? {}).filter(([, enabled]) => enabled).map(([className]) => className.trim()),
   ] : [];
 
   const sortableClasses = isSortableEnabled ? [
-    styles.sortable,
+    styles.isSortable,
     classes.sortableColumn,
   ] : [];
 
@@ -162,7 +163,7 @@ export const TableColumn = observer((columnProps: TableColumnProps) => {
     }
   }, 50) : undefined;
 
-  const onResizeStart = isResizingEnabled ? (evt: React.MouseEvent) => {
+  const onResizeStart = isResizingEnabled ? React.useCallback((evt: React.MouseEvent) => {
     evt.stopPropagation();
     evt.preventDefault();
 
@@ -174,7 +175,7 @@ export const TableColumn = observer((columnProps: TableColumnProps) => {
 
     columnProps.onResizeStart?.({ columnId, size: columnWidth }, evt);
 
-    const onResizing = (evt: MouseEvent) => {
+    const onResizing = throttle((evt: MouseEvent) => {
       const offsetX = evt.pageX - resizeStartOffset.x;
       const offsetY = evt.pageY - resizeStartOffset.y;
 
@@ -182,7 +183,7 @@ export const TableColumn = observer((columnProps: TableColumnProps) => {
         columnId, offsetX, offsetY,
         size: Math.max(minSize, columnWidth + offsetX),
       }, evt);
-    };
+    }, 50);
 
     document.body.addEventListener("mousemove", onResizing);
     document.body.addEventListener("mouseup", function onResizeEnd(evt) {
@@ -197,7 +198,7 @@ export const TableColumn = observer((columnProps: TableColumnProps) => {
       document.body.removeEventListener("mousemove", onResizing);
       document.body.removeEventListener("mouseup", onResizeEnd);
     });
-  } : undefined;
+  }, []) : undefined;
 
   const onResizeReset = isResizingEnabled ? (evt: React.MouseEvent) => {
     columnProps.onResizeReset?.({ columnId }, evt);
@@ -219,14 +220,26 @@ export const TableColumn = observer((columnProps: TableColumnProps) => {
     >
       {isHeadingRow && (
         <>
-          {sortable && sortingArrowClass && <i className={sortingArrowClass}/>}
+          {isSortableEnabled && sortingArrowClass && <i className={sortingArrowClass}/>}
           <div className={styles.title}>
             {title}
           </div>
-          {resizable && <i className={styles.resizable} onMouseDown={onResizeStart} onDoubleClick={onResizeReset}/>}
+          {isResizingEnabled && <i className={styles.isResizable} onMouseDown={onResizeStart} onDoubleClick={onResizeReset}/>}
+          {isDraggableEnabled && <TableColumnDragIconSvg className={classes.draggableIcon}/>}
         </>
       )}
       {!isHeadingRow && title}
     </div>
   )
 });
+
+export function TableColumnDragIconSvg(props: React.PropsWithChildren & { className?: string }) {
+  const className = `${styles.dragIcon} ${props.className ?? ""}`;
+  return (
+    <svg className={className} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+      <path
+        d="M11 18c0 1.1-.9 2-2 2s-2-.9-2-2s.9-2 2-2s2 .9 2 2zm-2-8c-1.1 0-2 .9-2 2s.9 2 2 2s2-.9 2-2s-.9-2-2-2zm0-6c-1.1 0-2 .9-2 2s.9 2 2 2s2-.9 2-2s-.9-2-2-2zm6 4c1.1 0 2-.9 2-2s-.9-2-2-2s-2 .9-2 2s.9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2s2-.9 2-2s-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2s2-.9 2-2s-.9-2-2-2z"></path>
+    </svg>
+  );
+}
+

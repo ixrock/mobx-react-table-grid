@@ -78,7 +78,7 @@ const tableState = createTableState<ResourceItem>({
     },
     {
       id: ResourceColumnId.hobby,
-      title: <>Name</>,
+      title: <>Hobby</>,
       renderValue: (row, col) => <b>{row.data.hobby.join(", ")}</b>,
       sortValue: (row, col) => row.data.hobby.join(""),
       searchValue: (row, col) => row.data.hobby.join(" "),

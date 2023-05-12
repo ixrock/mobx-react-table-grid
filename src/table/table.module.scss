@@ -11,6 +11,7 @@
   --grid-spacing: 8px;
   --grid-resizer-width: 20px;
   --grid-resizing-color: rgba(0, 0, 0, .5);
+  --grid-drag-icon-size: 20px;
 
   position: relative;
   display: grid;
@@ -71,8 +72,10 @@
   color: #000;
   height: min-content;
   background: var(--grid-thead-bgc);
+  align-items: center !important;
 
   .title {
+    flex: 1 0;
     overflow: hidden;
     text-overflow: ellipsis;
   }
@@ -83,6 +86,7 @@
     user-select: none;
     overflow: visible;
     transition: opacity ease-out 250ms;
+    place-items: center;
 
     &:not(.draggable) {
       /* re-ordering column (d&d) is disabled */
@@ -90,8 +94,11 @@
     }
 
     &:hover {
-      .resizable {
+      .isResizable {
         display: block;
+      }
+      .dragIcon {
+        visibility: visible;
       }
     }
   }
@@ -119,7 +126,7 @@
   border-color: currentColor transparent transparent transparent;
 }
 
-.resizable {
+.isResizable {
   position: absolute;
   top: 0;
   right: 0;
@@ -133,30 +140,56 @@
   display: none;
 }
 
-/* re-ordering heading columns with d&d */
-.sortable {
+/* multi ordering/sorting data in columns (asc/desc) */
+.isSortable {
   cursor: pointer;
   transition: background-color .5s ease-out;
 }
 
+/* re-ordering columns with d&d allowed */
+.isDraggable {
+}
+
 .isDragging {
+  opacity: .15;
   pointer-events: none;
 }
 
 .isDroppable {
-  opacity: .5;
+  opacity: .75;
 }
 
 .isDropReady {
   opacity: 1;
+  animation-name: bounce;
+  animation-duration: 1s;
+  animation-iteration-count: infinite;
+  animation-timing-function: ease-in-out;
 }
 
 /* selecting rows (e.g. on click) */
-.selectable {
+.isSelectable {
   cursor: pointer;
 }
 
-.selected {
+.selectedRow {
   color: var(--grid-row-selected-color);
   background-color: var(--grid-row-selected-bgc);
+}
+
+svg.dragIcon {
+  cursor: grab;
+  opacity: .5;
+  visibility: hidden;
+  pointer-events: none;
+  width: var(--grid-drag-icon-size);
+  height: var(--grid-drag-icon-size);
+}
+
+@keyframes bounce {
+  0%   { transform: translateY(0); }
+  10%  { transform: translateY(0); }
+  30%  { transform: translateY(-10px); }
+  50%  { transform: translateY(0); }
+  100% { transform: translateY(0); }
 }

@@ -62,6 +62,7 @@ export interface TableClassNames {
   sortableColumn?: string;
   draggableColumn?: string;
   draggableColumnActive?: string;
+  draggableIcon?: string;
   droppableColumn?: string;
   droppableColumnActive?: string;
   selectableRow?: string;
