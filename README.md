@@ -3,7 +3,7 @@
 
 Easy to use and powerful table grid React-js component based on CSS-grid 
 
-## Install
+## Install | [npm](https://www.npmjs.com/package/mobx-react-table-grid)
 ```
 npm install mobx-react-table-grid --save
 ```
@@ -46,6 +46,7 @@ import { observer } from "mobx-react"
 import { createTableState, Table } from "mobx-react-table-grid";
 
 interface ResourceItem {
+  id: string | number;
   name: string;
   hobby: string[];
   renderName(): React.ReactNode;
@@ -54,11 +55,13 @@ interface ResourceItem {
 const tableState = createTableState<ResourceItem>({
   dataItems: observable.box([
     {
+      id: 1,
       name: "Joe",
       hobby: ["hacking", "martial-arts"],
       renderName(){ return <b>Joel White</b> },
     },
     {
+      id: 2,
       name: "Ann",
       hobby: ["dancing"],
       renderName(){ return <b>Anna Dark</b> },
@@ -87,11 +90,11 @@ const tableState = createTableState<ResourceItem>({
 });
 
 const Demo = observer(() => {
-  const { tableColumns, sortedTableRows } = tableState;
+  const { tableColumns, searchResultTableRows } = tableState;
   
   return <Table 
     columns={tableColumns.get()} 
-    rows={sortedTableRows.get()} 
+    rows={searchResultTableRows.get()} 
   />
 });
 

@@ -26,10 +26,8 @@
   "bugs": {
     "url": "https://github.com/ixrock/mobx-react-table-grid/issues"
   },
-  "dependencies": {
-    "@tanstack/react-virtual": "^3.0.0-beta.54"
-  },
   "devDependencies": {
+    "@tanstack/react-virtual": "^3.0.0-beta.54",
     "@types/copy-webpack-plugin": "^10.1.0",
     "copy-webpack-plugin": "^11.0.0",
     "css-loader": "^6.7.3",
