@@ -48,7 +48,7 @@ export function makeData(len: number) {
     const status = Statuses[getRandomIndex(Statuses.length)];
     const restarts = Math.ceil(Math.random() * 9);
     const containers = Math.ceil(Math.random() * 5);
-    const resourceId = `id-${Number(Math.round(Math.random() * 1e8) + 1e8).toString(16)}`;
+    const resourceId = `id-${Number(Math.random() * 1e8 + 1e8).toString(32)}`;
     const resourceAge = new Date().getTime();
 
     pods.push({

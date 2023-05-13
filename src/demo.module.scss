@@ -13,6 +13,7 @@
 
 .demoTable {
   --grid-col-size-index: max-content;
+  --grid-col-size-checkbox: min-content;
   --grid-col-size-restarts: minmax(100px, 1fr);
 
   border: 1px solid currentColor;
@@ -93,26 +94,40 @@ h2 {
   color: white;
   font-size: 1rem;
   font-weight: 100;
+  margin: 0;
 }
 
 input {
   font-size: inherit;
 }
 
-.columnFilters {
+.hiddenColumns {
   display: flex;
   border-radius: 5px;
   gap: 1em;
-  padding: .5em 0;
+  padding: 20px 0;
   align-items: center;
 }
 
 .selectedRows {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(120px, min-content));
-  place-items: center;
-  margin-block-end: 1em;
+  display: flex;
+  flex-direction: column;
   gap: .5em;
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  width: 30%;
+  max-height: 50%;
+  background: rgba(0, 0, 0, .85);
+  padding: 20px;
+  z-index: 10;
+  overflow: auto;
+
+  h2 {
+    position: sticky;
+    top: 0;
+    z-index: 1;
+  }
 }
 
 .selectedItem {

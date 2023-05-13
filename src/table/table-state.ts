@@ -32,10 +32,17 @@ export interface CreateTableStateParams<ResourceItem = any> {
 export function createTableState<DataItem = any>(params: CreateTableStateParams<DataItem>) {
   const { headingColumns, dataItems, customizeRows, getRowId, searchBox } = params;
 
+  const searchText = searchBox ?? observable.box("");
+  const hiddenColumns = observable.set<TableColumnId>();
+  const selectedRowsId = observable.set<TableRowId>();
+  const sortedColumns = observable.map<TableColumnId, "asc" | "desc">();
+  const columnsOrder = observable.array<TableColumnId>(); // columns could be reordered by d&d
+  const columnSizes = observable.map<TableColumnId, string>(); // columns could be resized
+
   const tableColumnsAll: TableDataColumn<DataItem>[] = headingColumns.map((headColumn) => {
     const dataColumn = {} as TableDataColumn<DataItem>;
-    const columnDescriptorsInitial = Object.getOwnPropertyDescriptors(headColumn);
-    const columnDescriptorsStateManagement = Object.getOwnPropertyDescriptors({
+    const columnDescriptorsInitial = Object.getOwnPropertyDescriptors<TableDataColumn<DataItem>>(headColumn);
+    const columnDescriptorsEvents = Object.getOwnPropertyDescriptors<Partial<TableDataColumn<DataItem>>>({
       get sortingOrder() {
         return sortedColumns.get(headColumn.id); // current sorting columns state
       },
@@ -72,16 +79,9 @@ export function createTableState<DataItem = any>(params: CreateTableStateParams<
     // don't call any getters at early stage (e.g. `get title(): ReactNode`)
     return Object.defineProperties(dataColumn, {
       ...columnDescriptorsInitial,
-      ...columnDescriptorsStateManagement,
+      ...columnDescriptorsEvents,
     });
   });
-
-  const searchText = searchBox ?? observable.box("");
-  const hiddenColumns = observable.set<TableColumnId>();
-  const selectedRowsId = observable.set<TableRowId>();
-  const sortedColumns = observable.map<TableColumnId, "asc" | "desc">();
-  const columnsOrder = observable.array<TableColumnId>(); // columns could be reordered by d&d
-  const columnSizes = observable.map<TableColumnId, string>(); // columns could be resized
 
   const tableColumns = computed<TableDataColumn<DataItem>[]>(() => {
     if (columnsOrder.length) {
@@ -93,13 +93,20 @@ export function createTableState<DataItem = any>(params: CreateTableStateParams<
     }
   });
 
+  const getRowIdFromDataItem = (resource: DataItem, index: number) => {
+    return getRowId?.(resource)
+      ?? (resource as any).id ?? (resource as any).getId?.()
+      ?? index.toString();
+  };
+
   const tableRows = computed<TableDataRow<DataItem>[]>(() => {
     return dataItems.get().map((resource, resourceIndex) => {
-      const row: TableDataRow = {
+      let row = {} as TableDataRow;
+      const { onSelect: onSelectRow, ...customizedRow } = customizeRows?.(row);
+
+      const rowBaseDescriptors = Object.getOwnPropertyDescriptors<TableDataRow<DataItem>>({
         get id() {
-          return getRowId?.(resource)
-            ?? (resource as any).id ?? (resource as any).getId?.()
-            ?? resourceIndex.toString();
+          return getRowIdFromDataItem(resource, resourceIndex);
         },
         index: resourceIndex,
         data: resource,
@@ -111,32 +118,27 @@ export function createTableState<DataItem = any>(params: CreateTableStateParams<
             },
           }
         }),
-      };
+        get selected() {
+          return selectedRowsId.has(row.id);
+        },
+        onSelect: action((row: TableDataRow<DataItem>, evt: React.MouseEvent) => {
+          if (row.selectable) {
+            if (selectedRowsId.has(row.id)) selectedRowsId.delete(row.id);
+            else selectedRowsId.add(row.id);
+          }
+          onSelectRow?.(row, evt);
+        })
+      });
 
-      if (customizeRows) {
-        const customizedRow = customizeRows(row);
-        const customRow = {
-          ...row, // copy initial row fields
-          get selected() {
-            return selectedRowsId.has(row.id);
-          },
-          ...customizedRow, // allow to override "selected" but not "onSelect"
-          onSelect: action((row: TableDataRow<DataItem>, evt: React.MouseEvent) => {
-            if (row.selectable) {
-              if (selectedRowsId.has(row.id)) {
-                selectedRowsId.delete(row.id);
-              } else {
-                selectedRowsId.add(row.id);
-              }
-            }
-            customizedRow.onSelect?.(customRow, evt);
-          }),
-        };
-
-        return customRow;
+      // customize every data-row object with saving initial field descriptors (e.g. getters/setters would work as expected)
+      if (customizedRow) {
+        return Object.defineProperties(row, {
+          ...rowBaseDescriptors,
+          ...Object.getOwnPropertyDescriptors(customizedRow),
+        });
       }
 
-      return row;
+      return Object.defineProperties(row, rowBaseDescriptors);
     });
   });
 
@@ -166,12 +168,38 @@ export function createTableState<DataItem = any>(params: CreateTableStateParams<
     })
   });
 
+  const searchResultTableRowIds = computed<TableRowId[]>(() => {
+    return searchResultTableRows.get().map(row => row.id);
+  });
+
   const selectedTableRowsAll = computed<TableDataRow<DataItem>[]>(() => {
     return tableRows.get().filter(row => selectedRowsId.has(row.id));
   });
 
   const selectedTableRowsFiltered = computed<TableDataRow<DataItem>[]>(() => {
     return searchResultTableRows.get().filter(row => selectedRowsId.has(row.id));
+  });
+
+  const tableRowIds = computed<TableRowId[]>(() => {
+    return dataItems.get().map((dataItem, index) => getRowIdFromDataItem(dataItem, index));
+  });
+
+  const isSelectedAll = computed<boolean>(() => tableRowIds.get().every(rowId => selectedRowsId.has(rowId)));
+
+  const toggleRowSelectionAll = action((force?: boolean) => {
+    if (!isSelectedAll.get() && !force) {
+      selectedRowsId.replace(tableRowIds.get());
+    } else {
+      selectedRowsId.clear();
+    }
+  });
+
+  const toggleRowSelection = action((rowId: TableRowId, force?: boolean) => {
+    if (selectedRowsId.has(rowId) && !force) {
+      selectedRowsId.delete(rowId)
+    } else {
+      selectedRowsId.add(rowId);
+    }
   });
 
   return {
@@ -182,12 +210,17 @@ export function createTableState<DataItem = any>(params: CreateTableStateParams<
     sortedColumns,
     tableColumns,
     tableColumnsAll,
+    tableRowIds,
     tableRows,
     sortedTableRows,
     searchResultTableRows,
+    searchResultTableRowIds,
     selectedRowsId,
     selectedTableRowsAll,
     selectedTableRowsFiltered,
+    isSelectedAll,
+    toggleRowSelection,
+    toggleRowSelectionAll,
   }
 }
 
@@ -196,7 +229,7 @@ export interface ImportStateParams<DataItem> {
   storedState?: StorableCreateTableState<DataItem>;
 }
 
-export function importState<DataItem>({ tableState, storedState }: ImportStateParams<DataItem>) {
+export function importState<DataItem>({ tableState, storedState, ...flags }: ImportStateParams<DataItem>) {
   if (!storedState) return;
   const { columnsSizes = [], sortedColumns = [], columnsOrder, hiddenColumns = [], selectedRowsId = [], searchText = "" } = storedState;
 

@@ -3,22 +3,60 @@ import React from "react";
 import ReactDOM from "react-dom";
 import { observer } from "mobx-react"
 import { action, observable } from "mobx"
-import { CreatedTableState, createTableState, Table, bindAutoSaveChangesToStorage } from "./table";
+import { bindAutoSaveChangesToStorage, CreatedTableState, createTableState, Table } from "./table";
 import { makeData, renderContainers, renderStatus, ResourceColumnId, ResourceStub } from "./make-data";
 
 export const tableId = "demo";
 
+// this might be observable state from external stores, injectables, etc.
+const dataItems = observable.box(makeData(10_000));
+
 export const tableState = createTableState<ResourceStub>({
-  // some observable state from external stores, injectables, etc.
-  dataItems: observable.box(makeData(10_000)),
+  dataItems,
 
   // heading columns and data-accessors definitions
   headingColumns: [
     {
+      id: "checkbox",
+      resizable: false,
+      draggable: false,
+      sortable: false,
+      get title() {
+        return (
+          <input
+            type="checkbox"
+            checked={tableState.isSelectedAll.get()}
+            onChange={action(() => {
+              const { searchResultTableRowIds, selectedRowsId } = tableState;
+              const selectingRows = searchResultTableRowIds.get();
+              const allSelected = selectingRows.every(rowId => selectedRowsId.has(rowId));
+              if (!allSelected) {
+                selectingRows.forEach(rowId => selectedRowsId.add(rowId));
+              } else {
+                selectingRows.forEach(rowId => selectedRowsId.delete(rowId));
+              }
+            })}
+          />
+        );
+      },
+      renderValue: (row) => {
+        return (
+          <input
+            type="checkbox"
+            checked={tableState.selectedRowsId.has(row.id)}
+            onChange={() => void 0}
+            // Another option to select a row by clicking a checkbox *ONLY*
+            // This is useful with `{selectable: false}` from `customizeRows()`-option
+            // This allows to use `row.onSelect()` to handle extra details from underlying `row.data` item.
+            // onChange={action((evt) => tableState.toggleRowSelection(row.id, evt.target.checked))}
+          />
+        )
+      },
+    },
+    {
       id: "index",
-      title: <b>#</b>,
-      className: styles.indexColumn,
-      renderValue: (row) => row.index,
+      title: "#",
+      renderValue: (row) => row.index + 1,
     },
     {
       id: ResourceColumnId.name,
@@ -71,8 +109,9 @@ export const tableState = createTableState<ResourceStub>({
   customizeRows() {
     return {
       selectable: true,
-      onSelect(row) {
+      onSelect(row, evt) {
         console.log('[SELECT-ITEM]:', row);
+        // tableState.toggleRowSelection(row.id);
       }
     };
   }
@@ -80,16 +119,6 @@ export const tableState = createTableState<ResourceStub>({
 
 export const Demo = observer((props: { id?: string, store: CreatedTableState<ResourceStub> }) => {
   const { tableColumnsAll, hiddenColumns, tableColumns, searchResultTableRows, searchText, selectedRowsId, selectedTableRowsAll } = props.store;
-
-  const selectedRowsInfo = selectedTableRowsAll.get().map(row => {
-    const title = row.columns.find(row => row.id === ResourceColumnId.name).title;
-    return (
-      <div className={styles.selectedItem} key={String(row.id)}>
-        {title}
-        <i className={styles.unselectItem} onClick={action(() => selectedRowsId.delete(row.id))}/>
-      </div>
-    )
-  });
 
   return (
     <>
@@ -101,10 +130,11 @@ export const Demo = observer((props: { id?: string, store: CreatedTableState<Res
         defaultValue={searchText.get()}
         onChange={action((event) => searchText.set(event.target.value.trim()))}
       />
-      <div className={styles.columnFilters}>
+      <div className={styles.hiddenColumns}>
         <h2>Columns hiding</h2>
         <div className={styles.columnsHiding}>
           {tableColumnsAll.map(column => {
+            if (column.id == "checkbox") return;
             return (
               <label key={column.id}>
                 <input
@@ -118,10 +148,18 @@ export const Demo = observer((props: { id?: string, store: CreatedTableState<Res
         </div>
       </div>
 
-      {selectedRowsInfo.length > 0 && (
+      {selectedRowsId.size > 0 && (
         <div className={styles.selectedRows}>
-          <h2>Selected names</h2>
-          {selectedRowsInfo}
+          <h2>Selected names ({selectedRowsId.size})</h2>
+          {selectedTableRowsAll.get().map(row => {
+            const title = row.columns.find(row => row.id === ResourceColumnId.name).title;
+            return (
+              <div className={styles.selectedItem} key={String(row.id)}>
+                {title}
+                <i className={styles.unselectItem} onClick={() => selectedRowsId.delete(row.id)}/>
+              </div>
+            )
+          })}
           <button className={styles.unselectAll} onClick={() => selectedRowsId.clear()}>Unselect All</button>
         </div>
       )}
@@ -144,13 +182,14 @@ export const Demo = observer((props: { id?: string, store: CreatedTableState<Res
  * Preload, import and auto-save table-state changes with `window.localStorage`
  */
 bindAutoSaveChangesToStorage<ResourceStub>({
-  tableId, tableState,
+  tableId,
+  tableState,
   async toStorage(tableId, state) {
     console.log(`[SAVING STATE]: id=${tableId}`, state);
-    window.localStorage.setItem(tableId, JSON.stringify(state));
+    sessionStorage.setItem(tableId, JSON.stringify(state));
   },
   async fromStorage(tableId: string) {
-    return JSON.parse(window.localStorage.getItem(tableId) ?? `{}`);
+    return JSON.parse(sessionStorage.getItem(tableId) ?? `{}`);
   }
 }).then(() => {
   ReactDOM.render(<Demo store={tableState}/>, document.getElementById('app'));
