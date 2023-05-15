@@ -1,10 +1,12 @@
-import styles from "./demo.module.scss";
 import React from "react";
 import ReactDOM from "react-dom";
 import { observer } from "mobx-react"
 import { action, observable } from "mobx"
 import { bindAutoSaveChangesToStorage, CreatedTableState, createTableState, Table } from "./table";
 import { makeData, renderContainers, renderStatus, ResourceColumnId, ResourceStub } from "./make-data";
+
+// better to include own project styles after "mobx-react-table-grid/index.css"
+import styles from "./demo.module.scss";
 
 export const tableId = "demo";
 
@@ -18,38 +20,39 @@ export const tableState = createTableState<ResourceStub>({
   headingColumns: [
     {
       id: "checkbox",
+      className: styles.checkbox,
       resizable: false,
       draggable: false,
       sortable: false,
       get title() {
         return (
-          <input
-            type="checkbox"
-            checked={tableState.isSelectedAll.get()}
-            onChange={action(() => {
-              const { searchResultTableRowIds, selectedRowsId } = tableState;
-              const selectingRows = searchResultTableRowIds.get();
-              const allSelected = selectingRows.every(rowId => selectedRowsId.has(rowId));
-              if (!allSelected) {
-                selectingRows.forEach(rowId => selectedRowsId.add(rowId));
-              } else {
-                selectingRows.forEach(rowId => selectedRowsId.delete(rowId));
-              }
-            })}
-          />
+          <label onClick={evt => evt.stopPropagation()}>
+            <input
+              type="checkbox"
+              checked={tableState.isSelectedAll.get()}
+              onChange={action(() => {
+                const { searchResultTableRowIds, selectedRowsId } = tableState;
+                const selectingRows = searchResultTableRowIds.get();
+                const allSelected = selectingRows.every(rowId => selectedRowsId.has(rowId));
+                if (!allSelected) {
+                  selectingRows.forEach(rowId => selectedRowsId.add(rowId));
+                } else {
+                  selectingRows.forEach(rowId => selectedRowsId.delete(rowId));
+                }
+              })}
+            />
+          </label>
         );
       },
       renderValue: (row) => {
         return (
-          <input
-            type="checkbox"
-            checked={tableState.selectedRowsId.has(row.id)}
-            onChange={() => void 0}
-            // Another option to select a row by clicking a checkbox *ONLY*
-            // This is useful with `{selectable: false}` from `customizeRows()`-option
-            // This allows to use `row.onSelect()` to handle extra details from underlying `row.data` item.
-            // onChange={action((evt) => tableState.toggleRowSelection(row.id, evt.target.checked))}
-          />
+          <label onClick={evt => evt.stopPropagation()}>
+            <input
+              type="checkbox"
+              checked={tableState.selectedRowsId.has(row.id)}
+              onChange={(evt) => tableState.toggleRowSelection(row.id, evt.target.checked)}
+            />
+          </label>
         )
       },
     },
@@ -108,9 +111,11 @@ export const tableState = createTableState<ResourceStub>({
   ],
   customizeRows() {
     return {
-      selectable: true,
+      className: styles.row,
+      selectable: false, // checkboxes are used to select items
       onSelect(row, evt) {
-        console.log('[SELECT-ITEM]:', row);
+        console.log('[DETAILS]:', row, evt);
+        // uncomment when `{selectable:true}` and remove `onChange()`-handler from checkbox (replace to mock)
         // tableState.toggleRowSelection(row.id);
       }
     };

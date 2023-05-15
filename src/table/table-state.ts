@@ -101,10 +101,7 @@ export function createTableState<DataItem = any>(params: CreateTableStateParams<
 
   const tableRows = computed<TableDataRow<DataItem>[]>(() => {
     return dataItems.get().map((resource, resourceIndex) => {
-      let row = {} as TableDataRow;
-      const { onSelect: onSelectRow, ...customizedRow } = customizeRows?.(row);
-
-      const rowBaseDescriptors = Object.getOwnPropertyDescriptors<TableDataRow<DataItem>>({
+      const row: TableDataRow<DataItem> = {
         get id() {
           return getRowIdFromDataItem(resource, resourceIndex);
         },
@@ -126,19 +123,18 @@ export function createTableState<DataItem = any>(params: CreateTableStateParams<
             if (selectedRowsId.has(row.id)) selectedRowsId.delete(row.id);
             else selectedRowsId.add(row.id);
           }
-          onSelectRow?.(row, evt);
+          customizedRow?.onSelect?.(row, evt);
         })
-      });
+      };
 
       // customize every data-row object with saving initial field descriptors (e.g. getters/setters would work as expected)
+      const customizedRow = customizeRows?.(row);
       if (customizedRow) {
-        return Object.defineProperties(row, {
-          ...rowBaseDescriptors,
-          ...Object.getOwnPropertyDescriptors(customizedRow),
-        });
+        const { onSelect, ...rowOverrides } = customizedRow;
+        return Object.defineProperties(row, Object.getOwnPropertyDescriptors(rowOverrides));
       }
 
-      return Object.defineProperties(row, rowBaseDescriptors);
+      return row;
     });
   });
 
@@ -229,7 +225,7 @@ export interface ImportStateParams<DataItem> {
   storedState?: StorableCreateTableState<DataItem>;
 }
 
-export function importState<DataItem>({ tableState, storedState, ...flags }: ImportStateParams<DataItem>) {
+export function importState<DataItem>({ tableState, storedState }: ImportStateParams<DataItem>) {
   if (!storedState) return;
   const { columnsSizes = [], sortedColumns = [], columnsOrder, hiddenColumns = [], selectedRowsId = [], searchText = "" } = storedState;
 

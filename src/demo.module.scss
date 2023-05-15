@@ -20,9 +20,23 @@
   border-radius: 3px;
 }
 
+.checkbox {
+  padding: 0;
+
+  label {
+    position: relative;
+    display: block;
+    padding: var(--grid-spacing);
+  }
+}
+
 .restartsColumn {
   //text-align: center;
   //place-content: center;
+}
+
+.row {
+  cursor: pointer;
 }
 
 .column {
