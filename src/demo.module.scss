@@ -12,8 +12,7 @@
 }
 
 .demoTable {
-  --grid-col-size-index: max-content;
-  --grid-col-size-checkbox: min-content;
+  --grid-col-size-index: 70px;
   --grid-col-size-restarts: minmax(100px, 1fr);
 
   border: 1px solid currentColor;
@@ -30,13 +29,20 @@
   }
 }
 
+.indexColumn {
+  text-align: center;
+}
+
 .restartsColumn {
-  //text-align: center;
-  //place-content: center;
 }
 
 .row {
   cursor: pointer;
+
+  &.selectedRow {
+    color: var(--grid-row-selected-color);
+    background-color: var(--grid-row-selected-bgc) !important;
+  }
 }
 
 .column {

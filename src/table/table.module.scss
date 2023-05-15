@@ -80,7 +80,7 @@
     text-overflow: ellipsis;
   }
 
-  > .column {
+  .column {
     position: relative;
     display: flex;
     user-select: none;
@@ -97,6 +97,7 @@
       .isResizable {
         display: block;
       }
+
       .dragIcon {
         visibility: visible;
       }
@@ -180,6 +181,8 @@
 }
 
 svg.dragIcon {
+  position: absolute;
+  right: 10px;
   cursor: grab;
   opacity: .5;
   visibility: hidden;

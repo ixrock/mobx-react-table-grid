@@ -20,6 +20,7 @@ export const tableState = createTableState<ResourceStub>({
   headingColumns: [
     {
       id: "checkbox",
+      size: "40px",
       className: styles.checkbox,
       resizable: false,
       draggable: false,
@@ -59,6 +60,8 @@ export const tableState = createTableState<ResourceStub>({
     {
       id: "index",
       title: "#",
+      className: styles.indexColumn,
+      resizable: false, // size is fixed in css via `--grid-col-size-index` variable within a table.
       renderValue: (row) => row.index + 1,
     },
     {
@@ -109,9 +112,12 @@ export const tableState = createTableState<ResourceStub>({
       renderValue: (row) => new Date(row.data.getAge()).toLocaleString()
     },
   ],
-  customizeRows() {
+  customizeRows(row) {
     return {
-      className: styles.row,
+      get className(): string {
+        const isSelectedRow = tableState.selectedRowsId.has(row.id);
+        return `${styles.row} ${isSelectedRow ? styles.selectedRow : ""}`;
+      },
       selectable: false, // checkboxes are used to select items
       onSelect(row, evt) {
         console.log('[DETAILS]:', row, evt);

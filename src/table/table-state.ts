@@ -66,7 +66,7 @@ export function createTableState<DataItem = any>(params: CreateTableStateParams<
 
       // resizing columns state
       get size() {
-        return columnSizes.get(headColumn.id);
+        return headColumn.size ?? columnSizes.get(headColumn.id);
       },
       onResizing: action(({ columnId, size }) => {
         columnSizes.set(columnId, `${size}px`);
