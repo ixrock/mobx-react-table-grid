@@ -21,11 +21,12 @@ export interface TableDataRow<DataItem = any> {
 
 export interface TableRowProps extends TableDataRow {
   classes?: TableClassNames;
+  elemRef?: React.Ref<HTMLDivElement>;
 }
 
 export const TableRow = observer((rowProps: TableRowProps) => {
   const currentRow = { ...rowProps };
-  const { className = "", style = {}, columns, selectable, selected, classes = {} } = rowProps;
+  const { className = "", style = {}, columns, selectable, selected, classes = {}, elemRef, index } = rowProps;
   const isHeadingRow = currentRow.id === tableTheadRowId;
 
   const selectableClassName: string = selectable ? [
@@ -46,7 +47,7 @@ export const TableRow = observer((rowProps: TableRowProps) => {
   };
 
   return (
-    <div className={rowClassName} style={style} onClick={onSelect}>
+    <div className={rowClassName} style={style} data-index={index} onClick={onSelect} ref={elemRef}>
       {columns.map(columnData => {
         return (
           <TableColumn

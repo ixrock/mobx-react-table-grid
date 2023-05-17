@@ -85,8 +85,9 @@ export interface TableDataColumn<DataItem = any> {
 }
 
 export interface TableColumnProps extends TableDataColumn {
-  classes?: TableClassNames;
   parentRow: TableDataRow;
+  classes?: TableClassNames;
+  elemRef?: React.RefCallback<HTMLDivElement>;
 }
 
 export const TableColumn = observer((columnProps: TableColumnProps) => {
@@ -94,7 +95,7 @@ export const TableColumn = observer((columnProps: TableColumnProps) => {
     id: columnId,
     className, title, style, parentRow, sortingOrder,
     sortable = true, draggable = true, resizable = true,
-    minSize = 50, classes = {},
+    minSize = 50, classes = {}, elemRef,
   } = columnProps;
 
   const isHeadingRow = parentRow.id === tableTheadRowId;
@@ -135,20 +136,20 @@ export const TableColumn = observer((columnProps: TableColumnProps) => {
 
   const draggableClasses = isDraggableEnabled ? [
     styles.isDraggable,
-    classes.draggableColumn,
+    classes.draggableColumn ?? "",
     ...Object.entries(dragMetrics ?? {}).filter(([, enabled]) => enabled).map(([className]) => className.trim()),
     ...Object.entries(dropMetrics ?? {}).filter(([, enabled]) => enabled).map(([className]) => className.trim()),
   ] : [];
 
   const sortableClasses = isSortableEnabled ? [
     styles.isSortable,
-    classes.sortableColumn,
+    classes.sortableColumn ?? "",
   ] : [];
 
   const columnClassName = [
     styles.column,
-    !isHeadingRow ? classes.columnBaseClass : "",
-    isResizingEnabled && classes.resizableColumn,
+    !isHeadingRow ? classes.columnBaseClass ?? "" : "",
+    isResizingEnabled ? classes.resizableColumn ?? "" : "",
     ...draggableClasses,
     ...sortableClasses,
     className,
@@ -212,11 +213,16 @@ export const TableColumn = observer((columnProps: TableColumnProps) => {
     isDragging = false;
   } : undefined;
 
+  const bindRef = (elem: HTMLDivElement) => {
+    elemRef?.(elem);
+    dropRef?.(dragRef(elem));
+  };
+
   return (
     <div
       className={columnClassName} style={style}
       onDragStart={onDragStart} onDragEnd={onDragEnd} onMouseDown={onSorting}
-      ref={elem => dropRef?.(dragRef(elem))}
+      ref={bindRef}
     >
       {isHeadingRow && (
         <>

@@ -118,5 +118,8 @@ module.exports = {
   devServer: {
     compress: true,
     port: 9001,
+    client: {
+      overlay: false
+    }
   },
 } as webpack.Configuration;

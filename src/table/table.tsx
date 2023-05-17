@@ -38,7 +38,7 @@ export interface TableProps<DataItem = any> {
   /**
    * Max expected row's height. Currently, all rows has that fixed size.
    * @dependencies of `@tanstack/react-virtual`
-   * @default: 50
+   * @default: 40
    */
   rowSize?: number;
   /**
@@ -47,6 +47,12 @@ export interface TableProps<DataItem = any> {
    * @dependencies of `@tanstack/react-virtual`
    */
   overscan?: number;
+  /**
+   * Allows to have different sizes (heights) for rows, calculated from row-element when it's visible.
+   * Otherwise, `props.rowSize` would be used as fixed height for `virtualRow.size`
+   * @default false
+   */
+  dynamicRowSize?: boolean;
   /**
    * Allows to add custom static rows or some other contents (e.g. "+" button with `position: absolute`)
    */
@@ -72,29 +78,30 @@ export interface TableClassNames {
 export const Table = observer((props: TableProps) => {
   const tableElemRef = React.useRef<HTMLDivElement>(null);
   const {
-    className = "",
     style = {},
     classes = {},
     paddingStart = 0,
-    rowSize = 50,
+    rowSize = 40,
     overscan = 10,
+    dynamicRowSize = false,
     header = null,
     rows = [],
     columns = [],
     children,
   } = props;
 
-  const rowVirtualizer = useVirtualizer({
+  const virtualizer = useVirtualizer({
     count: rows.length,
     getScrollElement: () => tableElemRef.current,
     getItemKey: (index: number) => String(rows[index].id ?? index),
     estimateSize: (index: number) => rowSize,
     paddingStart: rowSize + paddingStart,
     overscan: overscan,
+    measureElement: (elem: HTMLElement) => elem?.scrollHeight ?? rowSize,
   });
 
-  const virtualRows = rowVirtualizer.getVirtualItems();
-  const maxScrollHeight = virtualRows.length ? rowVirtualizer.getTotalSize() : 0;
+  const virtualRows = virtualizer.getVirtualItems();
+  const maxScrollHeight = virtualRows.length ? virtualizer.getTotalSize() : 0;
 
   const cssVars = {
     ...style,
@@ -102,9 +109,14 @@ export const Table = observer((props: TableProps) => {
     [`--grid-virtual-max-height`]: `${maxScrollHeight}px`,
   } as React.CSSProperties;
 
+  const className: string = [
+    styles.table,
+    props.className,
+  ].filter(Boolean).join(" ");
+
   return (
     <DndProvider backend={HTML5Backend}>
-      <div id={props.id} className={`${styles.table} ${className}`} style={cssVars} ref={tableElemRef}>
+      <div id={props.id} className={className} style={cssVars} ref={tableElemRef}>
         {header && (
           <TableRow
             id={tableHeaderRowId}
@@ -130,13 +142,14 @@ export const Table = observer((props: TableProps) => {
               key={virtualRow.key}
               id={virtualRow.key}
               index={virtualRow.index}
+              className={`${row.className ?? ""} ${dynamicRowSize ? styles.dynamicSize : ""}`}
+              elemRef={dynamicRowSize ? virtualizer.measureElement : undefined}
               style={{
                 ...row.style,
                 position: "absolute",
-                top: virtualRow.start,
+                transform: `translateY(${virtualRow.start}px)`,
                 height: virtualRow.size,
                 width: "100%",
-                overflow: "hidden"
               }}
             />
           );

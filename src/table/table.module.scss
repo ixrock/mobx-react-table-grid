@@ -10,7 +10,7 @@
   --grid-thead-bgc: rgba(255, 255, 255, .9);
   --grid-spacing: 8px;
   --grid-resizer-width: 20px;
-  --grid-resizing-color: rgba(0, 0, 0, .5);
+  --grid-resizing-color: rgba(255, 255, 255, .25);
   --grid-drag-icon-size: 20px;
 
   position: relative;
@@ -23,6 +23,7 @@
   justify-items: stretch;
   overflow: auto;
   overflow: overlay;
+  contain: strict;
 }
 
 /* max possible scroll-height calculated by rows virtualizer */
@@ -44,25 +45,34 @@
   z-index: 1;
 }
 
-.row:not(.header) {
-  /* display: contents; // ignore element in the DOM layout and use it's children in parent css-grid */
-  grid-column: 1 / -1; /* merge all columns for parent's table grid */
-  display: grid; /* ignore element as direct css-grid child */
-  grid-template-columns: inherit;
-  transition: background-color ease-in-out .35s;
-  align-items: baseline;
-  gap: inherit;
+.row {
+  &:not(.header) {
+    /* display: contents; // ignore element in the DOM layout and use it's children in parent css-grid */
+    grid-column: 1 / -1; /* merge all columns for parent's table grid */
+    display: grid; /* ignore element as direct css-grid child */
+    grid-template-columns: inherit;
+    transition: background-color ease-in-out .35s;
+    gap: inherit;
 
-  &:not(.thead):not(.selectedRow):hover {
-    background: var(--grid-row-highlight-bgc);
+    &:not(.thead):not(.selectedRow):hover {
+      background: var(--grid-row-highlight-bgc);
+    }
+  }
+
+  &.dynamicSize > .column {
+    display: flex;
+    align-items: center;
+  }
+
+  &:not(.dynamicSize) > .column {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 }
 
 .column {
   padding: var(--grid-spacing);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
 }
 
 .thead {
@@ -72,7 +82,6 @@
   color: #000;
   height: min-content;
   background: var(--grid-thead-bgc);
-  align-items: center !important;
 
   .title {
     flex: 1 0;
@@ -181,8 +190,9 @@
 }
 
 svg.dragIcon {
-  position: absolute;
-  right: 10px;
+  //position: absolute;
+  //right: 10px;
+  flex-shrink: 0;
   cursor: grab;
   opacity: .5;
   visibility: hidden;
@@ -192,9 +202,19 @@ svg.dragIcon {
 }
 
 @keyframes bounce {
-  0%   { transform: translateY(0); }
-  10%  { transform: translateY(0); }
-  30%  { transform: translateY(-10px); }
-  50%  { transform: translateY(0); }
-  100% { transform: translateY(0); }
+  0% {
+    transform: translateY(0);
+  }
+  10% {
+    transform: translateY(0);
+  }
+  30% {
+    transform: translateY(-10px);
+  }
+  50% {
+    transform: translateY(0);
+  }
+  100% {
+    transform: translateY(0);
+  }
 }

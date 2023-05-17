@@ -179,6 +179,7 @@ export const Demo = observer((props: { id?: string, store: CreatedTableState<Res
         id={tableId}
         paddingStart={40}
         rowSize={40}
+        dynamicRowSize={false}
         className={styles.demoTable}
         header={<b>Table Header</b>}
         columns={tableColumns.get()}
