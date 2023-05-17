@@ -59,12 +59,12 @@
     }
   }
 
-  &.dynamicSize > .column {
+  &:not(.thead).dynamicSize > .column {
     display: flex;
     align-items: center;
   }
 
-  &:not(.dynamicSize) > .column {
+  &:not(.thead):not(.dynamicSize) > .column {
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
