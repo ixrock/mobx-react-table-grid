@@ -54,7 +54,7 @@
     transition: background-color ease-in-out .35s;
     gap: inherit;
 
-    &:not(.thead):not(.selectedRow):hover {
+    &:not(.thead):not(.selectedRow):hover > .column {
       background: var(--grid-row-highlight-bgc);
     }
   }
@@ -90,12 +90,14 @@
   }
 
   .column {
-    position: relative;
+    position: inherit;
+    top: inherit;
     display: flex;
     user-select: none;
     overflow: visible;
     transition: opacity ease-out 250ms;
     place-items: center;
+    background: inherit;
 
     &:not(.draggable) {
       /* re-ordering column (d&d) is disabled */
@@ -187,6 +189,11 @@
 .selectedRow {
   color: var(--grid-row-selected-color);
   background-color: var(--grid-row-selected-bgc);
+
+  .column {
+    color: inherit;
+    background-color: inherit;
+  }
 }
 
 svg.dragIcon {

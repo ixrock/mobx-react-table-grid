@@ -1,9 +1,8 @@
 import styles from "./table.module.scss";
 import React from "react";
 import { observer } from "mobx-react"
-import { TableDataColumn, TableColumn } from "./table-column";
+import { TableColumn, TableDataColumn } from "./table-column";
 import type { TableClassNames } from "./table";
-import { tableTheadRowId } from "./table-constants";
 
 export type TableRowId = string | number | symbol;
 
@@ -26,20 +25,16 @@ export interface TableRowProps extends TableDataRow {
 
 export const TableRow = observer((rowProps: TableRowProps) => {
   const currentRow = { ...rowProps };
-  const { className = "", style = {}, columns, selectable, selected, classes = {}, elemRef, index } = rowProps;
-  const isHeadingRow = currentRow.id === tableTheadRowId;
-
-  const selectableClassName: string = selectable ? [
-    styles.isSelectable,
-    classes.selectableRow,
-    selected ? [styles.selectedRow, classes.selectedRow] : [],
-  ].flat().filter(Boolean).join(" ") : "";
+  const { className, style = {}, columns, selectable, selected, classes = {}, elemRef, index } = rowProps;
 
   const rowClassName: string = [
     styles.row,
-    !isHeadingRow ? classes.rowBaseClass : "",
-    selectableClassName,
     className,
+    selectable && styles.isSelectable,
+    selectable && classes.selectableRow,
+    selected && styles.selectedRow,
+    selected && classes.selectedRow,
+    classes.rowBaseClass,
   ].filter(Boolean).join(" ");
 
   const onSelect = (evt: React.MouseEvent) => {

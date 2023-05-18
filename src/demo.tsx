@@ -114,10 +114,6 @@ export const tableState = createTableState<ResourceStub>({
   ],
   customizeRows(row) {
     return {
-      get className(): string {
-        const isSelectedRow = tableState.selectedRowsId.has(row.id);
-        return `${styles.row} ${isSelectedRow ? styles.selectedRow : ""}`;
-      },
       selectable: false, // checkboxes are used to select items
       onSelect(row, evt) {
         console.log('[DETAILS]:', row, evt);
@@ -179,7 +175,6 @@ export const Demo = observer((props: { id?: string, store: CreatedTableState<Res
         id={tableId}
         paddingStart={40}
         rowSize={40}
-        dynamicRowSize={false}
         className={styles.demoTable}
         header={<b>Table Header</b>}
         columns={tableColumns.get()}
