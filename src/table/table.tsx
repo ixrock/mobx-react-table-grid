@@ -48,12 +48,6 @@ export interface TableProps<DataItem = any> {
    */
   overscan?: number;
   /**
-   * Allows to have different sizes (heights) for rows, calculated from row-element when it's visible.
-   * Otherwise, `props.rowSize` would be used as fixed height for `virtualRow.size`
-   * @default false
-   */
-  dynamicRowSize?: boolean;
-  /**
    * Allows to add custom static rows or some other contents (e.g. "+" button with `position: absolute`)
    */
   children?: React.ReactNode;
@@ -83,12 +77,17 @@ export const Table = observer((props: TableProps) => {
     paddingStart = 0,
     rowSize = 40,
     overscan = 10,
-    dynamicRowSize = false,
     header = null,
     rows = [],
     columns = [],
     children,
   } = props;
+
+  const [scrollTop, setScrollTop] = React.useState(0);
+
+  React.useLayoutEffect(() => {
+    setScrollTop(tableElemRef.current?.scrollTop ?? 0);
+  });
 
   const virtualizer = useVirtualizer({
     count: rows.length,
@@ -97,7 +96,10 @@ export const Table = observer((props: TableProps) => {
     estimateSize: (index: number) => rowSize,
     paddingStart: rowSize + paddingStart,
     overscan: overscan,
-    measureElement: (elem: HTMLElement) => elem?.scrollHeight ?? rowSize,
+    measureElement(elem: HTMLElement) {
+      if (!elem) return;
+      return (elem.firstChild as HTMLElement)?.offsetHeight;
+    },
   });
 
   const virtualRows = virtualizer.getVirtualItems();
@@ -142,14 +144,12 @@ export const Table = observer((props: TableProps) => {
               key={virtualRow.key}
               id={virtualRow.key}
               index={virtualRow.index}
-              className={`${row.className ?? ""} ${dynamicRowSize ? styles.dynamicSize : ""}`}
-              elemRef={dynamicRowSize ? virtualizer.measureElement : undefined}
+              elemRef={virtualizer.measureElement}
               style={{
                 ...row.style,
-                position: "absolute",
-                transform: `translateY(${virtualRow.start}px)`,
-                height: virtualRow.size,
-                width: "100%",
+                // position: "absolute",
+                // transform: `translateY(${virtualRow.start}px)`,
+                // height: virtualRow.size,
               }}
             />
           );

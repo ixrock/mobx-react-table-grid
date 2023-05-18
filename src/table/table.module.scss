@@ -1,7 +1,7 @@
 
 .table {
   /* default "auto"-size for all columns */
-  --grid-col-size: minmax(50px, 1fr);
+  --grid-col-size: minmax(min-content, 1fr);
 
   --grid-row-highlight-bgc: #000000aa;
   --grid-row-selected-bgc: #3d90ce;
@@ -43,14 +43,18 @@
   text-align: center;
   background: var(--grid-header-bgc);
   z-index: 1;
+
+  > .column {
+    justify-content: center;
+  }
 }
 
 .row {
   &:not(.header) {
-    /* display: contents; // ignore element in the DOM layout and use it's children in parent css-grid */
-    grid-column: 1 / -1; /* merge all columns for parent's table grid */
-    display: grid; /* ignore element as direct css-grid child */
-    grid-template-columns: inherit;
+    display: contents; // ignore element in the DOM layout and use it's children in parent css-grid
+    //grid-column: 1 / -1; /* merge all columns for parent's table grid */
+    //display: grid; /* ignore element as direct css-grid child */
+    //grid-template-columns: inherit;
     transition: background-color ease-in-out .35s;
     gap: inherit;
 
@@ -59,15 +63,13 @@
     }
   }
 
-  &:not(.thead).dynamicSize > .column {
-    display: flex;
-    align-items: center;
-  }
-
-  &:not(.thead):not(.dynamicSize) > .column {
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+  &:not(.thead) {
+    .column {
+      display: flex;
+      align-items: center;
+      height: inherit;
+      transform: inherit;
+    }
   }
 }
 
@@ -98,6 +100,7 @@
     transition: opacity ease-out 250ms;
     place-items: center;
     background: inherit;
+    z-index: inherit;
 
     &:not(.draggable) {
       /* re-ordering column (d&d) is disabled */
