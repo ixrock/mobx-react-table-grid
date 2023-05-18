@@ -1,36 +1,42 @@
 import React, { useEffect, useState, useLayoutEffect } from "react";
-import type { TableDataRow } from "../table";
+import { useLocalObservable } from "mobx-react";
+import { TableRow, TableDataRow } from "../table/table-row";
 
 export interface VirtualizationOptions {
   scrollListElemRef: React.RefObject<HTMLElement>;
-  rowRef: React.RefObject<HTMLElement>;
-  rows: TableDataRow[];
-  overscanRows?: number;
-  initialVisibleRowsCount?: number;
+  rows: VirtualizedRow[];
+  approxRowSize?: number;
+  initialVisibleRows?: number;
 }
 
 export interface VirtualizedRow extends TableDataRow {
-  elem?: HTMLElement;
+  elem: React.ReactElement<HTMLElement>;
+  visible?: boolean;
+  start?: number;
   size?: number;
 }
 
 export interface VirtualizedState {
   scrollTop?: number;
   rows: VirtualizedRow[];
-  visibleRows: VirtualizedRow[]; /* visible rows within viewport + `opts.overscanRows` */
+  visibleRows: VirtualizedRow[]; /* visible rows within viewport */
   maxScrollHeight: number; /* max possible `scrollList.scrollHeight` for grid container */
 }
 
 export function useVirtualization(options: VirtualizationOptions): VirtualizedState {
-  const { scrollListElemRef, rows, initialVisibleRowsCount = 10 } = options;
-  const [visibleRows, setVisibleRows] = useState<VirtualizedRow[]>(rows.slice(0, initialVisibleRowsCount));
+  const { scrollListElemRef, initialVisibleRows = 10, rows } = options;
+
+  const [visibleRows, setVisibleRows] = useState<VirtualizedRow[]>(rows.slice(0, initialVisibleRows));
   const [scrollTop, setScrollTop] = useState(0);
+  const [scrollHeight, setScrollHeight] = useState(0);
   const [maxScrollHeight, setMaxScrollHeight] = useState(0);
 
   useLayoutEffect(() => {
-    setScrollTop(scrollListElemRef.current?.scrollTop ?? 0);
+    const parentElem = scrollListElemRef.current as HTMLElement;
+    setScrollTop(parentElem.scrollTop);
+    setScrollHeight(parentElem.scrollHeight)
   }, [
-    scrollListElemRef.current.children,
+    scrollListElemRef.current,
   ]);
 
   useEffect(() => {
@@ -45,7 +51,8 @@ export function useVirtualization(options: VirtualizationOptions): VirtualizedSt
 
     function observerCallback(entries: IntersectionObserverEntry[], observer: IntersectionObserver) {
       entries.forEach(({ target, isIntersecting: isVisible }) => {
-        // const rowElem = target as HTMLElement;
+        const rowElem = target as HTMLElement;
+        // console.log('ROW', { rowElem, isVisible })
         // const rowHeight = rowElem.offsetHeight;
         // rowElem.style.display = isVisible ? "grid" : "none";
       });
@@ -57,7 +64,7 @@ export function useVirtualization(options: VirtualizationOptions): VirtualizedSt
       gridRows.forEach(rowElement => scrollObserver.unobserve(rowElement));
     };
   }, [
-    scrollListElemRef.current.children,
+    scrollListElemRef.current,
   ]);
 
   return {

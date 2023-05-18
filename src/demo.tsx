@@ -173,8 +173,6 @@ export const Demo = observer((props: { id?: string, store: CreatedTableState<Res
 
       <Table
         id={tableId}
-        paddingStart={40}
-        rowSize={40}
         className={styles.demoTable}
         header={<b>Table Header</b>}
         columns={tableColumns.get()}

@@ -1,12 +1,12 @@
 import styles from "./table.module.scss";
 import React from "react";
-import { observer } from "mobx-react"
+import { observer, useLocalObservable } from "mobx-react"
 import { DndProvider } from "react-dnd";
 import { HTML5Backend } from "react-dnd-html5-backend";
-import { useVirtualizer } from "@tanstack/react-virtual";
 import { TableDataRow, TableRow } from "./table-row";
 import type { TableDataColumn } from "./table-column";
 import { tableHeaderRowId, tableTheadRowId } from "./table-constants";
+import { useVirtualization, VirtualizedRow } from "../hooks/useVirtualization";
 
 export interface TableProps<DataItem = any> {
   id?: string;
@@ -30,23 +30,6 @@ export interface TableProps<DataItem = any> {
    * Usually `props.rows` needs to be generated with some items list and used above `props.columns`
    */
   rows: TableDataRow<DataItem>[];
-  /**
-   * Usually it's should be the same as `props.header.offsetHeight` (when provided)
-   * @dependencies of `@tanstack/react-virtual`
-   */
-  paddingStart?: number;
-  /**
-   * Max expected row's height. Currently, all rows has that fixed size.
-   * @dependencies of `@tanstack/react-virtual`
-   * @default: 40
-   */
-  rowSize?: number;
-  /**
-   * Extra items for creating as virtual rows within scrollable area of viewpoint (table)
-   * @default: 10
-   * @dependencies of `@tanstack/react-virtual`
-   */
-  overscan?: number;
   /**
    * Allows to add custom static rows or some other contents (e.g. "+" button with `position: absolute`)
    */
@@ -74,36 +57,27 @@ export const Table = observer((props: TableProps) => {
   const {
     style = {},
     classes = {},
-    paddingStart = 0,
-    rowSize = 40,
-    overscan = 10,
     header = null,
     rows = [],
     columns = [],
     children,
   } = props;
 
-  const [scrollTop, setScrollTop] = React.useState(0);
+  const virtualRows = useLocalObservable(() => rows.map(row => {
+    return {
+      ...row,
+      get elem(){
+        return <TableRow {...row} key={row.id as string} classes={classes}/>;
+      },
+    } as VirtualizedRow
+  }));
 
-  React.useLayoutEffect(() => {
-    setScrollTop(tableElemRef.current?.scrollTop ?? 0);
+  const { maxScrollHeight, visibleRows } = useVirtualization({
+    scrollListElemRef: tableElemRef,
+    rows: virtualRows,
+    initialVisibleRows: 10,
+    approxRowSize: 40,
   });
-
-  const virtualizer = useVirtualizer({
-    count: rows.length,
-    getScrollElement: () => tableElemRef.current,
-    getItemKey: (index: number) => String(rows[index].id ?? index),
-    estimateSize: (index: number) => rowSize,
-    paddingStart: rowSize + paddingStart,
-    overscan: overscan,
-    measureElement(elem: HTMLElement) {
-      if (!elem) return;
-      return (elem.firstChild as HTMLElement)?.offsetHeight;
-    },
-  });
-
-  const virtualRows = virtualizer.getVirtualItems();
-  const maxScrollHeight = virtualRows.length ? virtualizer.getTotalSize() : 0;
 
   const cssVars = {
     ...style,
@@ -135,25 +109,7 @@ export const Table = observer((props: TableProps) => {
           classes={classes}
           data={null}
         />
-        {virtualRows.map(virtualRow => {
-          const row = rows[virtualRow.index];
-          return (
-            <TableRow
-              {...row}
-              classes={classes}
-              key={virtualRow.key}
-              id={virtualRow.key}
-              index={virtualRow.index}
-              elemRef={virtualizer.measureElement}
-              style={{
-                ...row.style,
-                // position: "absolute",
-                // transform: `translateY(${virtualRow.start}px)`,
-                // height: virtualRow.size,
-              }}
-            />
-          );
-        })}
+        {visibleRows.map(row => row.elem)}
         {children}
       </div>
     </DndProvider>
