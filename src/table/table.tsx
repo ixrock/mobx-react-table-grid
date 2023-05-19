@@ -98,7 +98,7 @@ export const Table = observer((props: TableProps) => {
           classes={classes}
           data={null}
         />
-        {virtualRows.get().map(row => <TableRow {...row} key={row.id as string} classes={classes}/>)}
+        {virtualRows.map(row => <TableRow {...row} key={row.id as string} classes={classes}/>)}
         {children}
       </div>
     </DndProvider>
