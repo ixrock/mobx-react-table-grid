@@ -147,9 +147,11 @@ export const TableColumn = observer((columnProps: TableColumnProps) => {
 
   const sortingArrowClass = [
     styles.sortingArrow,
-    sortable && sortingOrder === "asc" ? styles.arrowUp : sortingOrder === "desc" ? styles.arrowDown : "",
     classes.sortingArrow,
-  ].filter(Boolean).join(" ");
+    sortingOrder === "asc" ? [styles.arrowUp, classes.sortingArrowAsc]
+      : sortingOrder === "desc" ? [styles.arrowDown, classes.sortingArrowDesc]
+        : "",
+  ].flat().filter(Boolean).join(" ");
 
   const columnClassName = [
     styles.column,

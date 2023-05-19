@@ -75,6 +75,8 @@ export interface TableClassNames {
   selectableRow?: string;
   selectedRow?: string;
   sortingArrow?: string;
+  sortingArrowAsc?: string;
+  sortingArrowDesc?: string;
 }
 
 export const Table = observer((props: TableProps) => {
