@@ -226,7 +226,7 @@ export const TableColumn = observer((columnProps: TableColumnProps) => {
     >
       {isHeadingRow && (
         <>
-          {isSortableEnabled && sortingArrowClass && <i className={sortingArrowClass}/>}
+          {isSortableEnabled && sortingArrowClass && <i data-sort-order={sortingOrder} className={sortingArrowClass}/>}
           <div className={styles.title}>
             {title}
           </div>
