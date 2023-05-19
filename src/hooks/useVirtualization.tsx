@@ -24,7 +24,6 @@ export interface VirtualizationOptions<DataItem = any> {
 }
 
 export interface VirtualizedRow<DataItem = any> extends TableDataRow<DataItem> {
-  start?: number; // px
   size?: number; // px
 }
 
@@ -44,11 +43,10 @@ export function useVirtualization<D>(options: VirtualizationOptions<D>): Virtual
     overscan = 10,
   } = options;
   const [scrollTop, setScrollTop] = useState(0);
-  const [scrollHeight, setScrollHeight] = useState(0);
   const [maxScrollHeight, setMaxScrollHeight] = useState(rows.length * approxRowSize);
+  const [scrollHeight, setScrollHeight] = useState(0);
   const [visibleItemsCount, setVisibleItemsCount] = useState(initialVisibleRows + overscan); // TODO: update on window/viewport resize
 
-  const rowStart = useLocalObservable<Record<TableRowId, number>>(() => ({}));
   const rowSize = useLocalObservable<Record<TableRowId, number>>(() => ({}));
   const rowVisibility = observable(
     rows.slice(0, visibleItemsCount).reduce((state, row) => {
@@ -63,8 +61,9 @@ export function useVirtualization<D>(options: VirtualizationOptions<D>): Virtual
         row.id,
         {
           ...row,
-          start: rowStart[row.id] + (approxRowSize * index),
-          size: rowSize[row.id] ?? approxRowSize,
+          get size(){
+            return rowSize[row.id] ?? approxRowSize;
+          },
         } as VirtualizedRow
       ]))
     );
@@ -77,15 +76,10 @@ export function useVirtualization<D>(options: VirtualizationOptions<D>): Virtual
   }).get();
 
   useLayoutEffect(() => {
-    const parentElem = parentElemRef.current as HTMLElement;
-    setScrollTop(parentElem.scrollTop);
-    setScrollHeight(parentElem.scrollHeight)
-  }, [
-    parentElemRef.current,
-  ]);
-
-  useLayoutEffect(() => {
     const rootElem = parentElemRef.current as HTMLElement;
+    setScrollTop(rootElem.scrollTop);
+    setScrollHeight(rootElem.scrollHeight)
+
     const observingRowElement = Array.from(rootElem.childNodes).map(row => row.firstChild) as HTMLElement[];
 
     const observer = new IntersectionObserver(observerCallback, {
@@ -101,15 +95,20 @@ export function useVirtualization<D>(options: VirtualizationOptions<D>): Virtual
         const rowId = rowElem.dataset.id;
         if (!rowId) return; // skip: for `header`, `thead` and other possible custom rows
 
-        // console.log(`ROW: ${rowId}`, { rowElem: rowColumn, isVisible })
         rowVisibility[rowId] = isVisible;
         rowElem.dataset.visible = String(isVisible);
 
-        // freeing up UI freezing cause of repaint (or maybe reflow?)
+        // free up UI freezing cause of repaint (or maybe reflow?)
         window.requestAnimationFrame(
           action(() => {
             rowSize[rowId] = rowColumn.scrollHeight;
             rowElem.dataset.size = String(rowSize[rowId]);
+
+            const maxScrollHeight = rows
+              .map(row => rowSize[row.id] ?? approxRowSize)
+              .reduce((total, size) => total + size, 0);
+
+            setMaxScrollHeight(maxScrollHeight);
           })
         );
       }));
