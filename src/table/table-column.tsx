@@ -99,7 +99,6 @@ export const TableColumn = observer((columnProps: TableColumnProps) => {
   } = columnProps;
 
   const isHeadingRow = parentRow.id === tableTheadRowId;
-  const sortingArrowClass = sortable && sortingOrder === "asc" ? styles.arrowUp : sortingOrder === "desc" ? styles.arrowDown : "";
   const isDraggableEnabled = isHeadingRow && draggable;
   const isSortableEnabled = isHeadingRow && sortable;
   const isResizingEnabled = isHeadingRow && resizable;
@@ -146,9 +145,15 @@ export const TableColumn = observer((columnProps: TableColumnProps) => {
     classes.sortableColumn ?? "",
   ] : [];
 
+  const sortingArrowClass = [
+    styles.sortingArrow,
+    sortable && sortingOrder === "asc" ? styles.arrowUp : sortingOrder === "desc" ? styles.arrowDown : "",
+    classes.sortingArrow,
+  ].filter(Boolean).join(" ");
+
   const columnClassName = [
     styles.column,
-    !isHeadingRow ? classes.columnBaseClass ?? "" : "",
+    classes.columnBaseClass,
     isResizingEnabled ? classes.resizableColumn ?? "" : "",
     ...draggableClasses,
     ...sortableClasses,
@@ -226,8 +231,8 @@ export const TableColumn = observer((columnProps: TableColumnProps) => {
     >
       {isHeadingRow && (
         <>
-          {isSortableEnabled && sortingArrowClass && <i data-sort-order={sortingOrder} className={sortingArrowClass}/>}
-          <div className={styles.title}>
+          {isSortableEnabled && sortingArrowClass && <i className={sortingArrowClass}/>}
+          <div className={`${styles.title} ${classes.theadTitleClass ?? ""}`}>
             {title}
           </div>
           {isResizingEnabled && <i className={styles.isResizable} onMouseDown={onResizeStart} onDoubleClick={onResizeReset}/>}
