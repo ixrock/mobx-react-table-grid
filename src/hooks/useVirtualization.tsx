@@ -1,46 +1,88 @@
-import React, { useEffect, useState, useLayoutEffect } from "react";
+import React, { useEffect, useLayoutEffect, useState } from "react";
+import { computed, IComputedValue } from "mobx";
 import { useLocalObservable } from "mobx-react";
-import { TableRow, TableDataRow } from "../table/table-row";
+import type { TableDataRow, TableRowId } from "../table";
 
-export interface VirtualizationOptions {
-  scrollListElemRef: React.RefObject<HTMLElement>;
-  rows: VirtualizedRow[];
+export interface VirtualizationOptions<DataItem = any> {
+  parentElemRef: React.RefObject<HTMLElement>;
+  rows: TableDataRow[];
+  /**
+   * Default size for undiscovered rows (not yet visible within viewport while scrolling)
+   * @default 40
+   */
   approxRowSize?: number;
+  /**
+   * Initial amount of visible rows for gathering dimensions
+   * @default 25
+   */
   initialVisibleRows?: number;
 }
 
-export interface VirtualizedRow extends TableDataRow {
-  elem: React.ReactElement<HTMLElement>;
-  visible?: boolean;
-  start?: number;
-  size?: number;
+export interface VirtualizedRow<DataItem = any> extends TableDataRow<DataItem> {
+  start?: number; // px
+  size?: number; // px
 }
 
 export interface VirtualizedState {
   scrollTop?: number;
-  rows: VirtualizedRow[];
-  visibleRows: VirtualizedRow[]; /* visible rows within viewport */
-  maxScrollHeight: number; /* max possible `scrollList.scrollHeight` for grid container */
+  rowsMap: IComputedValue<Map<TableRowId, VirtualizedRow>>;
+  virtualRows: IComputedValue<VirtualizedRow[]>; /* visible within or near viewport */
+  maxScrollHeight: number; /* max possible `parentGridElem.scrollHeight` */
 }
 
-export function useVirtualization(options: VirtualizationOptions): VirtualizedState {
-  const { scrollListElemRef, initialVisibleRows = 10, rows } = options;
-
-  const [visibleRows, setVisibleRows] = useState<VirtualizedRow[]>(rows.slice(0, initialVisibleRows));
+export function useVirtualization<D>(options: VirtualizationOptions<D>): VirtualizedState {
+  const {
+    parentElemRef, rows,
+    initialVisibleRows = 25,
+    approxRowSize = 40,
+  } = options;
   const [scrollTop, setScrollTop] = useState(0);
   const [scrollHeight, setScrollHeight] = useState(0);
-  const [maxScrollHeight, setMaxScrollHeight] = useState(0);
+  const [maxScrollHeight, setMaxScrollHeight] = useState(rows.length * approxRowSize);
+
+  const rowStart = useLocalObservable<Record<TableRowId, number>>(() => ({}));
+  const rowSize = useLocalObservable<Record<TableRowId, number>>(() => ({}));
+
+  const rowVisibility = useLocalObservable<Record<TableRowId, boolean>>(() => {
+    const state: Record<TableRowId, boolean> = {};
+    return rows
+      .slice(0, initialVisibleRows)
+      .reduce((state, row) => {
+        state[row.id] = true;
+        return state;
+      }, state)
+  });
+
+  const allRows: IComputedValue<Map<TableRowId, VirtualizedRow>> = computed(() => {
+    return new Map(
+      rows.map((row, index) => ([
+        row.id,
+        {
+          ...row,
+          start: rowStart[row.id] + (approxRowSize * index),
+          size: rowSize[row.id] ?? approxRowSize,
+        } as VirtualizedRow
+      ]))
+    );
+  });
+
+  const visibleRows: IComputedValue<VirtualizedRow[]> = computed(() => {
+    const rows = allRows.get();
+    return Object.entries(rowVisibility)
+      .filter(([rowId, isVisible]) => isVisible)
+      .map(([rowId, isVisible]) => rows.get(rowId));
+  });
 
   useLayoutEffect(() => {
-    const parentElem = scrollListElemRef.current as HTMLElement;
+    const parentElem = parentElemRef.current as HTMLElement;
     setScrollTop(parentElem.scrollTop);
     setScrollHeight(parentElem.scrollHeight)
   }, [
-    scrollListElemRef.current,
+    parentElemRef.current,
   ]);
 
   useEffect(() => {
-    const rootElem = scrollListElemRef.current as HTMLElement;
+    const rootElem = parentElemRef.current as HTMLElement;
     const gridRows = Array.from(rootElem.children) as HTMLElement[];
 
     const scrollObserver = new IntersectionObserver(observerCallback, {
@@ -52,25 +94,23 @@ export function useVirtualization(options: VirtualizationOptions): VirtualizedSt
     function observerCallback(entries: IntersectionObserverEntry[], observer: IntersectionObserver) {
       entries.forEach(({ target, isIntersecting: isVisible }) => {
         const rowElem = target as HTMLElement;
-        // console.log('ROW', { rowElem, isVisible })
-        // const rowHeight = rowElem.offsetHeight;
-        // rowElem.style.display = isVisible ? "grid" : "none";
+        console.log('ROW', { rowElem, isVisible })
       });
     }
 
-    gridRows.forEach(rowElement => scrollObserver.observe(rowElement));
+    gridRows.forEach(elem => scrollObserver.observe(elem));
 
     return () => {
-      gridRows.forEach(rowElement => scrollObserver.unobserve(rowElement));
+      gridRows.forEach(elem => scrollObserver.unobserve(elem));
     };
   }, [
-    scrollListElemRef.current,
+    parentElemRef.current,
   ]);
 
   return {
+    rowsMap: allRows,
+    virtualRows: visibleRows,
     scrollTop,
-    rows,
-    visibleRows,
     maxScrollHeight,
   };
 }

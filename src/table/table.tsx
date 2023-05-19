@@ -1,12 +1,12 @@
 import styles from "./table.module.scss";
 import React from "react";
-import { observer, useLocalObservable } from "mobx-react"
+import { observer } from "mobx-react"
 import { DndProvider } from "react-dnd";
 import { HTML5Backend } from "react-dnd-html5-backend";
 import { TableDataRow, TableRow } from "./table-row";
 import type { TableDataColumn } from "./table-column";
 import { tableHeaderRowId, tableTheadRowId } from "./table-constants";
-import { useVirtualization, VirtualizedRow } from "../hooks/useVirtualization";
+import { useVirtualization } from "../hooks/useVirtualization";
 
 export interface TableProps<DataItem = any> {
   id?: string;
@@ -63,20 +63,9 @@ export const Table = observer((props: TableProps) => {
     children,
   } = props;
 
-  const virtualRows = useLocalObservable(() => rows.map(row => {
-    return {
-      ...row,
-      get elem(){
-        return <TableRow {...row} key={row.id as string} classes={classes}/>;
-      },
-    } as VirtualizedRow
-  }));
-
-  const { maxScrollHeight, visibleRows } = useVirtualization({
-    scrollListElemRef: tableElemRef,
-    rows: virtualRows,
-    initialVisibleRows: 10,
-    approxRowSize: 40,
+  const { maxScrollHeight, virtualRows } = useVirtualization({
+    parentElemRef: tableElemRef,
+    rows: rows,
   });
 
   const cssVars = {
@@ -109,7 +98,7 @@ export const Table = observer((props: TableProps) => {
           classes={classes}
           data={null}
         />
-        {visibleRows.map(row => row.elem)}
+        {virtualRows.get().map(row => <TableRow {...row} key={row.id as string} classes={classes}/>)}
         {children}
       </div>
     </DndProvider>
