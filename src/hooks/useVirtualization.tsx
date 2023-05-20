@@ -37,14 +37,11 @@ export function useVirtualization<D>(options: VirtualizationOptions<D>): Virtual
     initialVisibleRows = 25,
     approxRowSize = 40,
   } = options;
+
   const [scrollTop, setScrollTop] = useState(0);
   const [maxScrollHeight, setMaxScrollHeight] = useState(rows.length * approxRowSize);
-  const [scrolledItemsCount, setScrolledRowsCount] = useState(0);
-
-  // TODO: must correlate with viewport size (height)
-  const [visibleItemsCount, setVisibleItemsCount] = useState(initialVisibleRows);
-  const [viewportSize, setViewportSize] = useState(0);
-
+  const [scrolledItems, setScrolledRowsInfo] = useState<{ count: number, offset: number }>({ count: 0, offset: 0 });
+  const [visibleItemsCount, setVisibleItemsCount] = useState(initialVisibleRows); // TODO: calculate from viewport size (height)
   const rowSize = useLocalObservable<Record<TableRowId, number>>(() => ({}));
 
   const allRows: Map<TableRowId, VirtualizedRow> = computed(() => {
@@ -67,39 +64,20 @@ export function useVirtualization<D>(options: VirtualizationOptions<D>): Virtual
     );
   }).get();
 
-  // FIXME: get proper items count correlated with `parentElem.scrollTop`
   const visibleRows: VirtualizedRow[] = computed(() => {
     return Array
       .from(allRows.values())
-      .slice(scrolledItemsCount, scrolledItemsCount + visibleItemsCount);
+      .slice(0, scrolledItems.count + visibleItemsCount);
   }).get();
-
-  const onScroll = () => {
-    window.requestAnimationFrame(() => {
-      const scrollTop = parentElemRef.current?.scrollTop ?? 0;
-      setScrollTop(scrollTop);
-      setScrolledRowsCount(getScrolledVirtualRowsCount(allRows, scrollTop));
-    });
-  };
 
   useLayoutEffect(() => {
     const rootElem = parentElemRef.current as HTMLElement;
 
-    // FIXME: figure out how to observe new rendered items after scrolling
-    const observingRowElement = Array
+    const observingRows = Array
       .from(rootElem.childNodes)
       .map(row => row.firstChild) as HTMLElement[];
 
-    // TODO: update on window/element resize
-    setViewportSize(rootElem.scrollHeight);
-
-    const observer = new IntersectionObserver(observerCallback, {
-      root: rootElem,
-      rootMargin: "50% 0px",
-      threshold: [0, 0.25, 0.5, 0.75, 1],
-    });
-
-    function observerCallback(entries: IntersectionObserverEntry[], observer: IntersectionObserver) {
+    const visibilityObserver = new IntersectionObserver((entries: IntersectionObserverEntry[]) => {
       entries.forEach(action(({ target, isIntersecting: isVisible }) => {
         const rowColumn = target as HTMLElement;
         const rowElem = rowColumn.parentElement;
@@ -110,12 +88,12 @@ export function useVirtualization<D>(options: VirtualizationOptions<D>): Virtual
         console.log(`ROW: #${rowIndex}`, { isVisible });
         rowElem.dataset.visible = String(isVisible);
 
-        // free up UI freezing cause of repaint (or maybe reflow?)
+        // free up UI freezing cause of repaint/reflow while reading `rowColumn` dimensions, e.g. `offsetTop`, getBoundingClientRect(), etc.
         window.requestAnimationFrame(
           action(() => {
             rowSize[rowId] = rowColumn.offsetHeight;
-            rowElem.style.setProperty(`--grid-row-size`, `${rowSize[rowId]}px`);
-            rowElem.style.setProperty(`--grid-row-start`, `${allRows.get(rowId).start}px`);
+            rowElem.style.setProperty(`--grid-row-size`, `${rowSize[rowId]}`);
+            rowElem.style.setProperty(`--grid-row-start`, `${allRows.get(rowId).start}`);
 
             const maxScrollHeight = rows
               .map(row => rowSize[row.id] ?? approxRowSize)
@@ -125,14 +103,41 @@ export function useVirtualization<D>(options: VirtualizationOptions<D>): Virtual
           })
         );
       }));
-    }
+    }, {
+      root: rootElem,
+      rootMargin: "50% 0px",
+      threshold: [0, 0.25, 0.5, 0.75, 1],
+    });
+
+    // FIXME: visibility observer callback don't called when `addedNodes` > 0
+    const domObserver = new MutationObserver((mutationList) => {
+      for (const mutation of mutationList) {
+        if (mutation.type === "childList") {
+          mutation.addedNodes.forEach((elem: HTMLElement) => visibilityObserver.observe(elem));
+          mutation.removedNodes.forEach((elem: HTMLElement) => visibilityObserver.unobserve(elem));
+        }
+      }
+    });
+
+    const onScroll = () => {
+      window.requestAnimationFrame(() => {
+        const scrollTop = rootElem.scrollTop;
+        const scrolledRowsInfo = getScrolledRowsInfo([...allRows.values()], scrollTop);
+
+        setScrollTop(scrollTop);
+        setScrolledRowsInfo(scrolledRowsInfo);
+        rootElem.style.setProperty("--grid-scroll-offset", `${scrolledRowsInfo.offset}px`);
+      });
+    };
 
     rootElem.addEventListener("scroll", onScroll);
-    observingRowElement.forEach(elem => observer.observe(elem));
+    domObserver.observe(rootElem, { childList: true });
+    observingRows.forEach(elem => visibilityObserver.observe(elem));
 
     return () => {
       rootElem.removeEventListener("scroll", onScroll);
-      observingRowElement.forEach(elem => observer.unobserve(elem));
+      observingRows.forEach(elem => visibilityObserver.unobserve(elem));
+      domObserver.disconnect();
     };
   }, [
     parentElemRef.current,
@@ -146,23 +151,30 @@ export function useVirtualization<D>(options: VirtualizationOptions<D>): Virtual
   };
 }
 
-function getScrolledVirtualRowsCount(rowsMap: Map<TableRowId, VirtualizedRow>, scrollPos: number) {
-  if (!scrollPos) return 0;
-
-  const rows = Array.from(rowsMap.values());
+function getScrolledRowsInfo(rows: VirtualizedRow[], scrollPos: number) {
   let scrolledItemsOffset = 0;
   let scrolledItemsCount = 0;
 
+  // FIXME
   for (const row of rows) {
-    scrolledItemsOffset += row.size;
-    if (scrollPos > scrolledItemsOffset) {
+    if (scrollPos > scrolledItemsOffset + row.size) {
+      console.log(`ROW SIZE: #${row.index}`, row.size)
+      scrolledItemsOffset += row.size;
       scrolledItemsCount++;
     } else {
       break;
     }
   }
 
-  return scrolledItemsCount;
+  console.log({
+    count: scrolledItemsCount,
+    offset: scrolledItemsOffset,
+  })
+
+  return {
+    count: scrolledItemsCount,
+    offset: scrolledItemsOffset,
+  };
 }
 
 function measurePerformance(callback: () => void) {
