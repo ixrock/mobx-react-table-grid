@@ -98,7 +98,19 @@ export const Table = observer((props: TableProps) => {
           classes={classes}
           data={null}
         />
-        {virtualRows.map(row => <TableRow {...row} key={row.id as string} classes={classes}/>)}
+        {virtualRows.map(row => (
+          <TableRow
+            {...row}
+            key={row.id as string}
+            classes={classes}
+            style={{
+              ...style,
+              // position: "absolute",
+              // height: `var(--grid-row-size)`,
+              // transform: `translateY(var(--grid-row-start))`,
+            }}
+          />
+        ))}
         {children}
       </div>
     </DndProvider>

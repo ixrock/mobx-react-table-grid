@@ -24,6 +24,7 @@ export interface VirtualizationOptions<DataItem = any> {
 }
 
 export interface VirtualizedRow<DataItem = any> extends TableDataRow<DataItem> {
+  start?: number; // px
   size?: number; // px
 }
 
@@ -38,14 +39,14 @@ export function useVirtualization<D>(options: VirtualizationOptions<D>): Virtual
   const {
     parentElemRef,
     rows,
-    initialVisibleRows = 15,
+    initialVisibleRows = 25,
     approxRowSize = 40,
-    overscan = 10,
   } = options;
   const [scrollTop, setScrollTop] = useState(0);
   const [maxScrollHeight, setMaxScrollHeight] = useState(rows.length * approxRowSize);
-  const [scrollHeight, setScrollHeight] = useState(0);
-  const [visibleItemsCount, setVisibleItemsCount] = useState(initialVisibleRows + overscan); // TODO: update on window/viewport resize
+  const [viewportSize, setViewportSize] = useState(0);
+  const [scrolledItemsCount, setScrolledItemsCount] = useState(0);
+  const [visibleItemsCount, setVisibleItemsCount] = useState(initialVisibleRows);
 
   const rowSize = useLocalObservable<Record<TableRowId, number>>(() => ({}));
   const rowVisibility = observable(
@@ -61,7 +62,13 @@ export function useVirtualization<D>(options: VirtualizationOptions<D>): Virtual
         row.id,
         {
           ...row,
-          get size(){
+          get start() {
+            return Array.from(allRows.values())
+              .slice(0, index)
+              .map(row => row.size)
+              .reduce((total, size) => total + size, 0);
+          },
+          get size() {
             return rowSize[row.id] ?? approxRowSize;
           },
         } as VirtualizedRow
@@ -75,12 +82,20 @@ export function useVirtualization<D>(options: VirtualizationOptions<D>): Virtual
       .map(([rowId, isVisible]) => allRows.get(rowId));
   }).get();
 
+  const onScroll = () => {
+    window.requestAnimationFrame(() => {
+      const scrollTop = parentElemRef.current?.scrollTop ?? 0;
+      setScrollTop(scrollTop);
+
+      console.log('HIDDEN ROWS', getScrolledRowsCount(allRows, scrollTop));
+    });
+  };
+
   useLayoutEffect(() => {
     const rootElem = parentElemRef.current as HTMLElement;
-    setScrollTop(rootElem.scrollTop);
-    setScrollHeight(rootElem.scrollHeight)
-
     const observingRowElement = Array.from(rootElem.childNodes).map(row => row.firstChild) as HTMLElement[];
+
+    setViewportSize(rootElem.scrollHeight); // TODO: update on window/element resize
 
     const observer = new IntersectionObserver(observerCallback, {
       root: rootElem,
@@ -101,8 +116,9 @@ export function useVirtualization<D>(options: VirtualizationOptions<D>): Virtual
         // free up UI freezing cause of repaint (or maybe reflow?)
         window.requestAnimationFrame(
           action(() => {
-            rowSize[rowId] = rowColumn.scrollHeight;
-            rowElem.dataset.size = String(rowSize[rowId]);
+            rowSize[rowId] = rowColumn.offsetHeight;
+            rowElem.style.setProperty(`--grid-row-size`, `${rowSize[rowId]}px`);
+            rowElem.style.setProperty(`--grid-row-start`, `${allRows.get(rowId).start}px`);
 
             const maxScrollHeight = rows
               .map(row => rowSize[row.id] ?? approxRowSize)
@@ -114,9 +130,11 @@ export function useVirtualization<D>(options: VirtualizationOptions<D>): Virtual
       }));
     }
 
+    rootElem.addEventListener("scroll", onScroll);
     observingRowElement.forEach(elem => observer.observe(elem));
 
     return () => {
+      rootElem.removeEventListener("scroll", onScroll);
       observingRowElement.forEach(elem => observer.unobserve(elem));
     };
   }, [
@@ -129,4 +147,23 @@ export function useVirtualization<D>(options: VirtualizationOptions<D>): Virtual
     scrollTop,
     maxScrollHeight,
   };
+}
+
+function getScrolledRowsCount(rowsMap: Map<TableRowId, VirtualizedRow>, scrollPos: number) {
+  if (!scrollPos) return 0;
+
+  const rows = Array.from(rowsMap.values());
+  let scrolledItemsOffset = 0;
+  let scrolledItemsCount = 0;
+
+  for (const row of rows) {
+    scrolledItemsOffset += row.size;
+    if (scrollPos > scrolledItemsOffset) {
+      scrolledItemsCount++;
+    } else {
+      break;
+    }
+  }
+
+  return scrolledItemsCount;
 }
