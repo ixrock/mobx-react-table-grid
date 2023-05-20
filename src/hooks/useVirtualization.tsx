@@ -1,5 +1,5 @@
-import React, { useEffect, useLayoutEffect, useState } from "react";
-import { action, computed, observable } from "mobx";
+import React, { useLayoutEffect, useState } from "react";
+import { action, computed } from "mobx";
 import { useLocalObservable } from "mobx-react";
 import type { TableDataRow, TableRowId } from "../table";
 
@@ -12,15 +12,10 @@ export interface VirtualizationOptions<DataItem = any> {
    */
   approxRowSize?: number;
   /**
-   * Initial amount of visible rows for gathering dimensions
+   * Initial amount of visible virtual rows for rendering.
    * @default 25
    */
   initialVisibleRows?: number;
-  /**
-   * Add extra amount of visible virtual rows out of viewport size
-   * @default 10
-   */
-  overscan?: number;
 }
 
 export interface VirtualizedRow<DataItem = any> extends TableDataRow<DataItem> {
@@ -44,17 +39,13 @@ export function useVirtualization<D>(options: VirtualizationOptions<D>): Virtual
   } = options;
   const [scrollTop, setScrollTop] = useState(0);
   const [maxScrollHeight, setMaxScrollHeight] = useState(rows.length * approxRowSize);
-  const [viewportSize, setViewportSize] = useState(0);
-  const [scrolledItemsCount, setScrolledItemsCount] = useState(0);
+  const [scrolledItemsCount, setScrolledRowsCount] = useState(0);
+
+  // TODO: must correlate with viewport size (height)
   const [visibleItemsCount, setVisibleItemsCount] = useState(initialVisibleRows);
+  const [viewportSize, setViewportSize] = useState(0);
 
   const rowSize = useLocalObservable<Record<TableRowId, number>>(() => ({}));
-  const rowVisibility = observable(
-    rows.slice(0, visibleItemsCount).reduce((state, row) => {
-      state[row.id] = true;
-      return state;
-    }, {} as Record<TableRowId, boolean>)
-  );
 
   const allRows: Map<TableRowId, VirtualizedRow> = computed(() => {
     return new Map(
@@ -76,26 +67,31 @@ export function useVirtualization<D>(options: VirtualizationOptions<D>): Virtual
     );
   }).get();
 
+  // FIXME: get proper items count correlated with `parentElem.scrollTop`
   const visibleRows: VirtualizedRow[] = computed(() => {
-    return Object.entries(rowVisibility)
-      .filter(([rowId, isVisible]) => isVisible)
-      .map(([rowId, isVisible]) => allRows.get(rowId));
+    return Array
+      .from(allRows.values())
+      .slice(scrolledItemsCount, scrolledItemsCount + visibleItemsCount);
   }).get();
 
   const onScroll = () => {
     window.requestAnimationFrame(() => {
       const scrollTop = parentElemRef.current?.scrollTop ?? 0;
       setScrollTop(scrollTop);
-
-      console.log('HIDDEN ROWS', getScrolledRowsCount(allRows, scrollTop));
+      setScrolledRowsCount(getScrolledVirtualRowsCount(allRows, scrollTop));
     });
   };
 
   useLayoutEffect(() => {
     const rootElem = parentElemRef.current as HTMLElement;
-    const observingRowElement = Array.from(rootElem.childNodes).map(row => row.firstChild) as HTMLElement[];
 
-    setViewportSize(rootElem.scrollHeight); // TODO: update on window/element resize
+    // FIXME: figure out how to observe new rendered items after scrolling
+    const observingRowElement = Array
+      .from(rootElem.childNodes)
+      .map(row => row.firstChild) as HTMLElement[];
+
+    // TODO: update on window/element resize
+    setViewportSize(rootElem.scrollHeight);
 
     const observer = new IntersectionObserver(observerCallback, {
       root: rootElem,
@@ -108,9 +104,10 @@ export function useVirtualization<D>(options: VirtualizationOptions<D>): Virtual
         const rowColumn = target as HTMLElement;
         const rowElem = rowColumn.parentElement;
         const rowId = rowElem.dataset.id;
+        const rowIndex = rowElem.dataset.index;
         if (!rowId) return; // skip: for `header`, `thead` and other possible custom rows
 
-        rowVisibility[rowId] = isVisible;
+        console.log(`ROW: #${rowIndex}`, { isVisible });
         rowElem.dataset.visible = String(isVisible);
 
         // free up UI freezing cause of repaint (or maybe reflow?)
@@ -149,7 +146,7 @@ export function useVirtualization<D>(options: VirtualizationOptions<D>): Virtual
   };
 }
 
-function getScrolledRowsCount(rowsMap: Map<TableRowId, VirtualizedRow>, scrollPos: number) {
+function getScrolledVirtualRowsCount(rowsMap: Map<TableRowId, VirtualizedRow>, scrollPos: number) {
   if (!scrollPos) return 0;
 
   const rows = Array.from(rowsMap.values());
@@ -166,4 +163,11 @@ function getScrolledRowsCount(rowsMap: Map<TableRowId, VirtualizedRow>, scrollPo
   }
 
   return scrolledItemsCount;
+}
+
+function measurePerformance(callback: () => void) {
+  const startTime = performance.now();
+  callback();
+  const operationTimeMs = performance.now() - startTime;
+  console.log(`[PERFORMANCE]: ${operationTimeMs}ms`)
 }
