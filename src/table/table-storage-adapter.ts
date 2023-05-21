@@ -1,5 +1,5 @@
 import { reaction, comparer } from "mobx";
-import { type CreatedTableState, importState, StorableCreateTableState, toJSON } from "./table-state";
+import { type CreatedTableState, importState, StorableCreateTableState, exportState } from "./table-state";
 
 export interface BindAutoSaveToStorageParams<DataItem> {
   tableId: string;
@@ -23,7 +23,7 @@ export async function bindAutoSaveChangesToStorage<DataItem>(
   /**
    * Bind auto-saving changes as mobx-reaction from table-state to `window.localStorage`
    */
-  return reaction(() => toJSON(tableState), serializableState => toStorage(tableId, serializableState), {
+  return reaction(() => exportState(tableState), serializableState => toStorage(tableId, serializableState), {
     name: `[Table id="${tableId}"]: export state handler`,
     delay: savingDelay,
     equals: comparer.structural,

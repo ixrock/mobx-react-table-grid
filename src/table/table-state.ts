@@ -4,7 +4,7 @@ import type { TableColumnId, TableDataColumn, TableDataRow, TableRowId } from ".
 import orderBy from "lodash/orderBy";
 
 export type CreatedTableState<DataItem> = ReturnType<typeof createTableState<DataItem>>; /* observables + computed */
-export type StorableCreateTableState<DataItem> = ReturnType<typeof toJSON<DataItem>>; /* plain json */
+export type StorableCreateTableState<DataItem> = ReturnType<typeof exportState<DataItem>>; /* plain json */
 
 export interface CreateTableStateParams<ResourceItem = any> {
   dataItems: IComputedValue<ResourceItem[]>;
@@ -47,10 +47,14 @@ export function createTableState<DataItem = any>(params: CreateTableStateParams<
         return sortedColumns.get(headColumn.id); // current sorting columns state
       },
       onSorting: action((row, column, evt) => {
+        const isMultiSorting = evt.metaKey || evt.shiftKey;
         const order = sortedColumns.get(column.id);
-        if (!order) sortedColumns.set(column.id, "asc");
-        if (order === "asc") sortedColumns.set(column.id, "desc");
-        if (order === "desc") sortedColumns.delete(column.id);
+        if (!isMultiSorting && (!order || sortedColumns.size > 1)) {
+          sortedColumns.clear();
+        }
+        if (!order) sortedColumns.set(column.id, "desc");
+        if (order === "desc") sortedColumns.set(column.id, "asc");
+        if (order === "asc") sortedColumns.delete(column.id);
       }),
 
       // re-ordering columns state
@@ -237,7 +241,7 @@ export function importState<DataItem>({ tableState, storedState }: ImportStatePa
   tableState.selectedRowsId.replace(selectedRowsId);
 }
 
-export function toJSON<DataItem>(state: CreatedTableState<DataItem>) {
+export function exportState<DataItem>(state: CreatedTableState<DataItem>) {
   const { searchText, hiddenColumns, selectedRowsId, sortedColumns, columnSizes, columnsOrder } = state;
 
   return {

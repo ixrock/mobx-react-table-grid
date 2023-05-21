@@ -39,6 +39,7 @@ export interface TableProps<DataItem = any> {
 export interface TableClassNames {
   headerClass?: string;
   theadClass?: string;
+  theadTitleClass?: string;
   rowBaseClass?: string;
   columnBaseClass?: string;
   resizableColumn?: string;
@@ -50,6 +51,9 @@ export interface TableClassNames {
   droppableColumnActive?: string;
   selectableRow?: string;
   selectedRow?: string;
+  sortingArrow?: string;
+  sortingArrowAsc?: string;
+  sortingArrowDesc?: string;
 }
 
 export const Table = observer((props: TableProps) => {

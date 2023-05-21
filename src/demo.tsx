@@ -177,7 +177,12 @@ export const Demo = observer((props: { id?: string, store: CreatedTableState<Res
         header={<b>Table Header</b>}
         columns={tableColumns.get()}
         rows={searchResultTableRows.get()}
-        classes={{ columnBaseClass: styles.column }}
+        classes={{
+          columnBaseClass: styles.column,
+          rowBaseClass: styles.row,
+          sortingArrowAsc: "up",
+          sortingArrowDesc: "down",
+        }}
       />
     </>
   );
