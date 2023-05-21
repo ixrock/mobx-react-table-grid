@@ -53,7 +53,7 @@ export interface TableDataColumn<DataItem = any> {
    * This `data-getter` called when some column sorted by user action (UI event)
    * Usually this is a good place to update some external state for the table.
    */
-  onSorting?: (row: TableDataRow<DataItem>, col: TableDataColumn<DataItem>, evt: React.MouseEvent) => void;
+  onSorting?: (row: TableDataRow<DataItem>, col: TableDataColumn<DataItem>, evt: React.MouseEvent | React.KeyboardEvent) => void;
   /**
    * This `data-getter` called when some column is `resizable` and resizing events by user action (UI event)
    * Usually this is a good place to update some external state for the table (e.g. column sizes).
@@ -163,7 +163,7 @@ export const TableColumn = observer((columnProps: TableColumnProps) => {
   ].filter(Boolean).join(" ");
 
   // debouncing for checking drag&drop event firing state before sorting anything out ;)
-  const onSorting = isSortableEnabled ? debounce((evt: React.MouseEvent) => {
+  const onSorting = isSortableEnabled ? debounce(evt => {
     if (isDragging) return; // skip sorting if reordering columns has started
 
     if (isHeadingRow && sortable) {
@@ -225,10 +225,19 @@ export const TableColumn = observer((columnProps: TableColumnProps) => {
     dropRef?.(dragRef(elem));
   };
 
+  const accessibilityProps: React.HTMLProps<HTMLElement> = isHeadingRow && isSortableEnabled ? {
+    role: "button",
+    tabIndex: 0, // allow to focus heading column with [Tab]
+    "aria-label": sortingOrder ? `Sorted by ${typeof title === "string" ? title : columnId}` : undefined,
+    "aria-sort": sortingOrder ? `${sortingOrder}ending` : "none",
+  } : {};
+
   return (
     <div
+      {...accessibilityProps}
       className={columnClassName} style={style}
-      onDragStart={onDragStart} onDragEnd={onDragEnd} onMouseDown={onSorting}
+      onDragStart={onDragStart} onDragEnd={onDragEnd}
+      onMouseDown={onSorting} onKeyDown={evt => evt.key === "Enter" && onSorting(evt)}
       ref={bindRef}
     >
       {isHeadingRow && (

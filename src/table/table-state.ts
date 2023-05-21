@@ -47,10 +47,14 @@ export function createTableState<DataItem = any>(params: CreateTableStateParams<
         return sortedColumns.get(headColumn.id); // current sorting columns state
       },
       onSorting: action((row, column, evt) => {
+        const isMultiSorting = evt.metaKey || evt.shiftKey;
         const order = sortedColumns.get(column.id);
-        if (!order) sortedColumns.set(column.id, "asc");
-        if (order === "asc") sortedColumns.set(column.id, "desc");
-        if (order === "desc") sortedColumns.delete(column.id);
+        if (!isMultiSorting && (!order || sortedColumns.size > 1)) {
+          sortedColumns.clear();
+        }
+        if (!order) sortedColumns.set(column.id, "desc");
+        if (order === "desc") sortedColumns.set(column.id, "asc");
+        if (order === "asc") sortedColumns.delete(column.id);
       }),
 
       // re-ordering columns state
