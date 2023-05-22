@@ -15,6 +15,7 @@
 
   position: relative;
   display: grid;
+  grid-auto-flow: row dense;
   grid-template-columns: var(--grid-cols);
   flex: 1;
   height: var(--grid-height);

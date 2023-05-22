@@ -80,6 +80,7 @@ export const Table = observer((props: TableProps) => {
 
   const cssVars = {
     ...style,
+    gridAutoRows: "50px",
     [`--grid-cols`]: makeCssGridTemplate(columns),
     [`--grid-col-min-size`]: `${minSizeAllColumns}px`,
     [`--grid-virtual-max-height`]: `${maxScrollHeight}px`,
@@ -100,6 +101,8 @@ export const Table = observer((props: TableProps) => {
   return (
     <DndProvider backend={HTML5Backend}>
       <p>Rows hidden: {hiddenScrolledRowsCount}</p>
+      {/*<p>Scroll: #0-top:{virtualRows[0].start}, scrollPos: {scrollTop}</p>*/}
+
       <div id={props.id} className={className} style={cssVars} ref={tableElemRef}>
         {header && (
           <TableRow
@@ -117,7 +120,7 @@ export const Table = observer((props: TableProps) => {
           classes={classes}
           data={null}
         />
-        {virtualRows.map(row => (
+        {virtualRows.map((row, index) => (
           <TableRow
             {...row}
             key={row.id as string}
@@ -126,9 +129,9 @@ export const Table = observer((props: TableProps) => {
             style={{
               ...style,
               // height: row.size,
-              // top: row.start,
-              gridRow: 3 + row.index + hiddenScrolledRowsCount,
-              // transform: `translateY(${scrollTop}px)`,
+              // top: scrollTop,
+              gridRow: 3 + (/*row.index*/ + index) + hiddenScrolledRowsCount,
+              // transform: `translateY(${-virtualRows[0].start}px)`,
             }}
           />
         ))}
