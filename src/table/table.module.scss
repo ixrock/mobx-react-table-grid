@@ -1,7 +1,7 @@
 
 .table {
   /* default "auto"-size for all columns */
-  --grid-col-size: minmax(var(--grid-col-min-size), 1fr);
+  --grid-col-size: minmax(min-content, 1fr);
 
   --grid-row-highlight-bgc: #000000aa;
   --grid-row-selected-bgc: #3d90ce;
@@ -15,7 +15,10 @@
 
   position: relative;
   display: grid;
-  grid-template-columns: var(--grid-cols);
+  grid-template-columns: var(--grid-cols) !important;
+  grid-auto-rows: var(--grid-row-size) !important;
+  grid-template-rows: auto auto !important; // header, thead
+  grid-auto-flow: row dense;
   flex: 1;
   height: var(--grid-height);
   width: 100%;
@@ -43,14 +46,15 @@
   text-align: center;
   background: var(--grid-header-bgc);
   z-index: 1;
+
+  > .column {
+    justify-content: center;
+  }
 }
 
 .row {
   &:not(.header) {
-    /* display: contents; // ignore element in the DOM layout and use it's children in parent css-grid */
-    grid-column: 1 / -1; /* merge all columns for parent's table grid */
-    display: grid; /* ignore element as direct css-grid child */
-    grid-template-columns: inherit;
+    display: contents; // ignore element in the DOM layout and use it's children in parent css-grid
     transition: background-color ease-in-out .35s;
     gap: inherit;
 
@@ -58,21 +62,15 @@
       background: var(--grid-row-highlight-bgc);
     }
   }
-
-  &:not(.thead).dynamicSize > .column {
-    display: flex;
-    align-items: center;
-  }
-
-  &:not(.thead):not(.dynamicSize) > .column {
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
 }
 
 .column {
+  display: flex;
+  align-items: center;
+  white-space: nowrap;
+  overflow: hidden;
   padding: var(--grid-spacing);
+  grid-row: inherit !important;
 }
 
 .thead {
@@ -85,19 +83,18 @@
 
   .title {
     flex: 1 0;
-    overflow: hidden;
-    text-overflow: ellipsis;
   }
 
   .column {
     position: inherit;
     top: inherit;
     display: flex;
-    user-select: none;
     overflow: visible;
+    user-select: none;
     transition: opacity ease-out 250ms;
     place-items: center;
     background: inherit;
+    z-index: inherit;
 
     &:not(.draggable) {
       /* re-ordering column (d&d) is disabled */
