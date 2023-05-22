@@ -1,6 +1,5 @@
 import React, { useLayoutEffect, useState } from "react";
-import { computed } from "mobx";
-import type { TableDataRow } from "../table";
+import type { TableDataRow } from "./index";
 import throttle from "lodash/throttle";
 
 export interface VirtualizationOptions<DataItem = any> {

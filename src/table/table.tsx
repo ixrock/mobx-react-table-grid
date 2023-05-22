@@ -6,7 +6,7 @@ import { HTML5Backend } from "react-dnd-html5-backend";
 import { TableDataRow, TableRow } from "./table-row";
 import type { TableDataColumn } from "./table-column";
 import { tableHeaderRowId, tableTheadRowId } from "./table-constants";
-import { useVirtualization } from "../hooks/useVirtualization";
+import { useVirtualization } from "./useVirtualization";
 
 export interface TableProps<DataItem = any> {
   id?: string;
