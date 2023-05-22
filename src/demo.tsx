@@ -76,6 +76,7 @@ export const tableState = createTableState<ResourceStub>({
     },
     {
       id: ResourceColumnId.containers,
+      className: styles.containersColumn,
       title: <>Containers</>,
       renderValue: (row) => renderContainers(row.data.getContainerNumber()),
       sortValue: (row) => row.data.getContainerNumber(),

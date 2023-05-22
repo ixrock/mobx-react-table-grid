@@ -42,6 +42,11 @@ export interface TableProps<DataItem = any> {
    */
   rowSize?: number;
   /**
+   * Min-size (width) for all columns by default, could be changed/resized from UI
+   * @default 100
+   */
+  minSizeAllColumns?: number;
+  /**
    * Extra items for creating as virtual rows within scrollable area of viewpoint (table)
    * @default: 10
    * @dependencies of `@tanstack/react-virtual`
@@ -87,6 +92,7 @@ export const Table = observer((props: TableProps) => {
     paddingStart = 0,
     rowSize = 40,
     overscan = 10,
+    minSizeAllColumns = 100,
     dynamicRowSize = false,
     header = null,
     rows = [],
@@ -110,6 +116,7 @@ export const Table = observer((props: TableProps) => {
   const cssVars = {
     ...style,
     [`--grid-cols`]: makeCssGridTemplate(columns),
+    [`--grid-col-min-size`]: `${minSizeAllColumns}px`,
     [`--grid-virtual-max-height`]: `${maxScrollHeight}px`,
   } as React.CSSProperties;
 
@@ -117,6 +124,13 @@ export const Table = observer((props: TableProps) => {
     styles.table,
     props.className,
   ].filter(Boolean).join(" ");
+
+  const addColumnDefaults = (column: TableDataColumn): TableDataColumn => {
+    return {
+      ...column,
+      minSize: column.minSize ?? minSizeAllColumns,
+    }
+  };
 
   return (
     <DndProvider backend={HTML5Backend}>
@@ -133,7 +147,7 @@ export const Table = observer((props: TableProps) => {
         <TableRow
           id={tableTheadRowId}
           className={`${styles.thead} ${classes.theadClass ?? ""}`}
-          columns={columns}
+          columns={columns.map(addColumnDefaults)}
           classes={classes}
           data={null}
         />
@@ -148,6 +162,7 @@ export const Table = observer((props: TableProps) => {
               index={virtualRow.index}
               className={`${row.className ?? ""} ${dynamicRowSize ? styles.dynamicSize : ""}`}
               elemRef={dynamicRowSize ? virtualizer.measureElement : undefined}
+              columns={row.columns.map(addColumnDefaults)}
               style={{
                 ...row.style,
                 position: "absolute",

@@ -27,7 +27,7 @@ export interface TableDataColumn<DataItem = any> {
   size?: string;
   /**
    * Min-size of the column (width), that can be resized to it manually
-   * @default 50px
+   * @default 100px
    */
   minSize?: number;
   /**
@@ -95,7 +95,7 @@ export const TableColumn = observer((columnProps: TableColumnProps) => {
     id: columnId,
     className, title, style, parentRow, sortingOrder,
     sortable = true, draggable = true, resizable = true,
-    minSize = 50, classes = {}, elemRef,
+    minSize, classes = {}, elemRef,
   } = columnProps;
 
   const isHeadingRow = parentRow.id === tableTheadRowId;

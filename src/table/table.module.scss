@@ -1,7 +1,7 @@
 
 .table {
   /* default "auto"-size for all columns */
-  --grid-col-size: minmax(50px, 1fr);
+  --grid-col-size: minmax(var(--grid-col-min-size), 1fr);
 
   --grid-row-highlight-bgc: #000000aa;
   --grid-row-selected-bgc: #3d90ce;

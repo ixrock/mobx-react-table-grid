@@ -36,6 +36,13 @@
 .restartsColumn {
 }
 
+.containersColumn {
+  display: flex;
+  > * {
+    margin: auto 0;
+  }
+}
+
 .row {
   cursor: pointer;
 }
