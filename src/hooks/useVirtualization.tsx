@@ -1,25 +1,24 @@
 import React, { useLayoutEffect, useState } from "react";
-import { action, computed } from "mobx";
-import { useLocalObservable } from "mobx-react";
-import type { TableDataRow, TableRowId } from "../table";
+import { computed } from "mobx";
+import type { TableDataRow } from "../table";
+import throttle from "lodash/throttle";
 
 export interface VirtualizationOptions<DataItem = any> {
   parentElemRef: React.RefObject<HTMLElement>;
   rows: TableDataRow[];
   /**
-   * Default size for undiscovered rows (not yet visible within viewport while scrolling)
-   * @default 40
+   * Grid row size
+   * @default 50
    */
-  approxRowSize?: number;
+  rowSize: number;
   /**
-   * Initial amount of visible virtual rows for rendering.
-   * @default 25
+   * Extra visible items count, besides calculated from viewport size
+   * @default 10
    */
-  initialVisibleRows?: number;
+  overscan?: number;
 }
 
 export interface VirtualizedRow<DataItem = any> extends TableDataRow<DataItem> {
-  start?: number; // px
   size?: number; // px
 }
 
@@ -29,142 +28,85 @@ export function useVirtualization<D>(options: VirtualizationOptions<D>) {
   const {
     parentElemRef,
     rows,
-    initialVisibleRows = 25,
-    approxRowSize = 40,
+    rowSize = 50,
+    overscan = 10,
   } = options;
 
-  const [scrollTop, setScrollTop] = useState(0);
-  const [maxScrollHeight, setMaxScrollHeight] = useState(rows.length * approxRowSize);
-  const [hiddenScrolledRowsCount, setScrolledRowCount] = useState(0);
-  const [visibleRowsCount, setVisibleRowsCount] = useState(initialVisibleRows); // TODO: calculate from viewport size (height)
-  const [viewportHeight, setViewportHeight] = useState(0);
+  const [scrollPos, setScrollPos] = useState(0);
+  const [maxScrollHeight, setMaxScrollHeight] = useState(0);
+  const [scrolledRowsCount, setScrolledRowsCount] = useState(0);
+  const [viewportSize, setViewportSize] = useState(0);
+  const [visibleRowsCount, setVisibleRowsCount] = useState(1);
 
-  const rowSize = useLocalObservable<Record<TableRowId, number>>(() => ({}));
-
-  const allRows: Map<TableRowId, VirtualizedRow> = computed(() => {
-    return new Map(
-      rows.map((row, index) => ([
-        row.id,
-        {
-          ...row,
-          get start() {
-            return Array.from(allRows.values())
-              .slice(0, index)
-              .map(row => row.size)
-              .reduce((total, size) => total + size, 0);
-          },
-          get size() {
-            return rowSize[row.id] ?? approxRowSize;
-          },
-        } as VirtualizedRow
-      ]))
-    );
-  }).get();
-
-  const visibleRows: VirtualizedRow[] = computed(() => {
-    return Array
-      .from(allRows.values())
-      .slice(hiddenScrolledRowsCount, hiddenScrolledRowsCount + visibleRowsCount);
+  const virtualRows: VirtualizedRow[] = computed(() => {
+    return rows.slice(scrolledRowsCount, scrolledRowsCount + visibleRowsCount);
   }).get();
 
   useLayoutEffect(() => {
     const rootElem = parentElemRef.current as HTMLElement;
-    setViewportHeight(rootElem.offsetHeight);
 
-    const observingRows = Array
-      .from(rootElem.childNodes)
-      .map(row => row.firstChild) as HTMLElement[];
+    setMaxScrollHeight(rows.length * rowSize);
+    setViewportSize(rootElem.offsetHeight);
 
-    const visibilityObserver = new IntersectionObserver((entries: IntersectionObserverEntry[]) => {
-      entries.forEach(action(({ target, isIntersecting: isVisible }) => {
-        const rowColumn = target as HTMLElement;
-        const rowElem = rowColumn.parentElement;
-        const rowId = rowElem.dataset.id;
-        const rowIndex = rowElem.dataset.index;
-        if (!rowId) return; // skip: for `header`, `thead` and other possible custom rows
-
-        console.log(`ROW: #${rowIndex}, visible: ${isVisible}`);
-        rowElem.dataset.visible = String(isVisible);
-
-        // free up UI freezing cause of repaint/reflow while reading dom-element dimensions, e.g. `offsetTop`, `scrollHeight`, etc.
-        window.requestAnimationFrame(
-          action(() => {
-            // TODO: reset on resize viewport dimensions change
-            if(rowSize[rowId] === undefined) {
-              rowSize[rowId] = rowColumn.offsetHeight;
-            }
-
-            const maxScrollHeight = rows
-              .map(row => rowSize[row.id] ?? approxRowSize)
-              .reduce((total, size) => total + size, 0);
-
-            setMaxScrollHeight(maxScrollHeight);
-          })
-        );
-      }));
-    }, {
-      root: rootElem,
-      rootMargin: "50% 0px",
-      threshold: [0, 0.5, 1],
-    });
-
-    // FIXME: visibility observer callback don't called when `addedNodes` > 0
-    const domObserver = new MutationObserver((mutationList) => {
-      for (const mutation of mutationList) {
-        if (mutation.type === "childList") {
-          mutation.addedNodes.forEach((elem: HTMLElement) => visibilityObserver.observe(elem));
-          mutation.removedNodes.forEach((elem: HTMLElement) => visibilityObserver.unobserve(elem));
-        }
-      }
-    });
-
-    const onScroll = () => {
-      window.requestAnimationFrame(() => {
-        const { scrollTop, offsetHeight } = rootElem;
-        const rows = Array.from(allRows.values());
-        const scrolledRowsInfo = getScrolledRowsInfo(rows, scrollTop);
-        // const viewportRowsInfo = getScrolledRowsInfo(rows.slice(scrolledRowsInfo.count), offsetHeight);
-
-        setScrollTop(scrollTop);
-        setScrolledRowCount(scrolledRowsInfo.count);
-        // setViewportHeight(offsetHeight)
+    const onScroll = throttle(() => {
+      window.requestIdleCallback(() => {
+        const { scrollTop } = rootElem;
+        const scrolledRowsInfo = getScrolledRowsInfo({
+          rows,
+          scrollPos: scrollTop,
+          rowSize: rowSize,
+        });
+        setScrollPos(scrollTop);
+        setScrolledRowsCount(scrolledRowsInfo.count);
       });
-    };
+    }, 50);
+
+    const resizeObserver = new ResizeObserver(([entry]) => {
+      const viewportSize = Math.round(entry.contentRect.height);
+      setViewportSize(viewportSize);
+
+      const viewportRowsInfo = getScrolledRowsInfo({
+        rows: rows.slice(scrolledRowsCount),
+        scrollPos: viewportSize,
+        rowSize: rowSize,
+      });
+
+      setVisibleRowsCount(viewportRowsInfo.count + overscan);
+    });
 
     rootElem.addEventListener("scroll", onScroll);
-    domObserver.observe(rootElem, { childList: true });
-    observingRows.forEach(elem => visibilityObserver.observe(elem));
+    resizeObserver.observe(rootElem);
 
     return () => {
+      resizeObserver.disconnect();
       rootElem.removeEventListener("scroll", onScroll);
-      observingRows.forEach(elem => visibilityObserver.unobserve(elem));
-      domObserver.disconnect();
-    };
+    }
   }, [
-    parentElemRef.current,
+    rows,
+    parentElemRef,
   ]);
 
   return {
-    rowsMap: allRows,
-    virtualRows: visibleRows,
-    scrollTop,
+    virtualRows,
+    scrollPos,
     maxScrollHeight,
-    viewportHeight,
+    viewportSize,
     visibleRowsCount,
-    hiddenScrolledRowsCount,
+    scrolledRowsCount,
   };
 }
 
-
 // --Utils--
 
-function getScrolledRowsInfo(rows: VirtualizedRow[], scrollPos: number) {
+function getScrolledRowsInfo(opts: { rows: VirtualizedRow[], scrollPos: number, rowSize?: number }) {
+  const { rows, scrollPos } = opts;
   let scrolledItemsOffset = 0;
   let scrolledItemsCount = 0;
 
   for (const row of rows) {
-    if (scrollPos > scrolledItemsOffset + row.size) {
-      scrolledItemsOffset += row.size;
+    const rowSize = opts.rowSize ?? row.size;
+    if (scrollPos > scrolledItemsOffset + rowSize) {
+      scrolledItemsOffset += rowSize;
       scrolledItemsCount++;
     } else {
       break;
@@ -183,3 +125,64 @@ function measurePerformance(callback: () => void) {
   const operationTimeMs = performance.now() - startTime;
   console.log(`[PERFORMANCE]: ${operationTimeMs}ms`)
 }
+
+// TODO: experiment with rows auto-sizing
+//
+// useLayoutEffect(() => {
+//   const rootElem = parentElemRef.current as HTMLElement;
+//
+//   const observingRows = Array
+//     .from(rootElem.childNodes)
+//     .map(row => row.firstChild) as HTMLElement[];
+//
+//   const visibilityObserver = new IntersectionObserver((entries: IntersectionObserverEntry[]) => {
+//     entries.forEach(action(({ target, isIntersecting: isVisible }) => {
+//       const rowColumn = target as HTMLElement;
+//       const rowElem = rowColumn.parentElement;
+//       const rowId = rowElem.dataset.id;
+//       const rowIndex = rowElem.dataset.index;
+//       if (!rowId) return; // skip: for `header`, `thead` and other possible custom rows
+//
+//       console.log(`ROW: #${rowIndex}, visible: ${isVisible}`);
+//       rowElem.dataset.visible = String(isVisible);
+//
+//       // free up UI freezing cause of repaint/reflow while reading dom-element dimensions, e.g. `offsetTop`, `scrollHeight`, etc.
+//       window.requestAnimationFrame(
+//         action(() => {
+//           if (rowSize[rowId] === undefined) {
+//             rowSize[rowId] = rowColumn.offsetHeight;
+//           }
+//
+//           const maxScrollHeight = rows
+//             .map(row => rowSize[row.id] ?? approxRowSize)
+//             .reduce((total, size) => total + size, 0);
+//
+//           setMaxScrollHeight(maxScrollHeight);
+//         })
+//       );
+//     }));
+//   }, {
+//     root: rootElem,
+//     rootMargin: "50% 0px",
+//     threshold: [0, 0.5, 1],
+//   });
+//
+//   const domObserver = new MutationObserver((mutationList) => {
+//     for (const mutation of mutationList) {
+//       if (mutation.type === "childList") {
+//         mutation.addedNodes.forEach((elem: HTMLElement) => visibilityObserver.observe(elem));
+//         mutation.removedNodes.forEach((elem: HTMLElement) => visibilityObserver.unobserve(elem));
+//       }
+//     }
+//   });
+//
+//   domObserver.observe(rootElem, { childList: true });
+//   observingRows.forEach(elem => visibilityObserver.observe(elem));
+//
+//   return () => {
+//     observingRows.forEach(elem => visibilityObserver.unobserve(elem));
+//     domObserver.disconnect();
+//   };
+// }, [
+//   parentElemRef.current,
+// ]);

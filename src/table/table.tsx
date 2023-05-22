@@ -36,6 +36,11 @@ export interface TableProps<DataItem = any> {
    */
   minSizeAllColumns?: number;
   /**
+   * Default fixed row size (height) for "grid-auto-rows"
+   * @default 50
+   */
+  rowSize?: number;
+  /**
    * Allows to add custom static rows or some other contents (e.g. "+" button with `position: absolute`)
    */
   children?: React.ReactNode;
@@ -66,6 +71,7 @@ export const Table = observer((props: TableProps) => {
   const {
     style = {},
     classes = {},
+    rowSize = 50,
     minSizeAllColumns = 100,
     header = null,
     rows = [],
@@ -73,16 +79,17 @@ export const Table = observer((props: TableProps) => {
     children,
   } = props;
 
-  const { maxScrollHeight, virtualRows, scrollTop, hiddenScrolledRowsCount } = useVirtualization({
-    parentElemRef: tableElemRef,
+  const { maxScrollHeight, virtualRows, scrolledRowsCount } = useVirtualization({
     rows: rows,
+    parentElemRef: tableElemRef,
+    rowSize: rowSize,
   });
 
   const cssVars = {
     ...style,
-    gridAutoRows: "50px",
     [`--grid-cols`]: makeCssGridTemplate(columns),
-    [`--grid-col-min-size`]: `${minSizeAllColumns}px`,
+    [`--grid-row-size`]: `${rowSize}px`,
+    [`--grid-col-min-size`]: minSizeAllColumns ? `${minSizeAllColumns}px` : undefined,
     [`--grid-virtual-max-height`]: `${maxScrollHeight}px`,
   } as React.CSSProperties;
 
@@ -100,9 +107,6 @@ export const Table = observer((props: TableProps) => {
 
   return (
     <DndProvider backend={HTML5Backend}>
-      <p>Rows hidden: {hiddenScrolledRowsCount}</p>
-      {/*<p>Scroll: #0-top:{virtualRows[0].start}, scrollPos: {scrollTop}</p>*/}
-
       <div id={props.id} className={className} style={cssVars} ref={tableElemRef}>
         {header && (
           <TableRow
@@ -127,11 +131,8 @@ export const Table = observer((props: TableProps) => {
             classes={classes}
             columns={row.columns.map(addColumnDefaults)}
             style={{
+              gridRow: 3/*header + thead*/ + index + scrolledRowsCount,
               ...style,
-              // height: row.size,
-              // top: scrollTop,
-              gridRow: 3 + (/*row.index*/ + index) + hiddenScrolledRowsCount,
-              // transform: `translateY(${-virtualRows[0].start}px)`,
             }}
           />
         ))}

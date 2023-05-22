@@ -15,8 +15,10 @@
 
   position: relative;
   display: grid;
+  grid-template-columns: var(--grid-cols) !important;
+  grid-auto-rows: var(--grid-row-size) !important;
+  grid-template-rows: auto auto !important; // header, thead
   grid-auto-flow: row dense;
-  grid-template-columns: var(--grid-cols);
   flex: 1;
   height: var(--grid-height);
   width: 100%;
@@ -66,14 +68,12 @@
 }
 
 .column {
-  padding: var(--grid-spacing);
   display: flex;
   align-items: center;
-  position: inherit;
-  top: inherit;
-  left: inherit;
-  grid-row: inherit;
-  transform: inherit;
+  white-space: nowrap;
+  overflow: hidden;
+  padding: var(--grid-spacing);
+  grid-row: inherit !important;
 }
 
 .thead {
@@ -86,16 +86,14 @@
 
   .title {
     flex: 1 0;
-    overflow: hidden;
-    text-overflow: ellipsis;
   }
 
   .column {
     position: inherit;
     top: inherit;
     display: flex;
-    user-select: none;
     overflow: visible;
+    user-select: none;
     transition: opacity ease-out 250ms;
     place-items: center;
     background: inherit;
