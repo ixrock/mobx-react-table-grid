@@ -14,6 +14,12 @@ export interface TableProps<DataItem = any> {
   classes?: TableClassNames;
   style?: React.CSSProperties;
   /**
+   * Use or not rows virtualization to render table grid.
+   * When `true` table element must have some defined height.
+   * @default true
+   */
+  virtual?: boolean;
+  /**
    * Table's header html block.
    * Scrolled with table items behind heading columns.
    */
@@ -71,11 +77,12 @@ export const Table = observer((props: TableProps) => {
   const {
     style = {},
     classes = {},
-    rowSize = 50,
-    minSizeAllColumns = 100,
+    virtual = true,
     header = null,
     rows = [],
     columns = [],
+    rowSize = 50,
+    minSizeAllColumns = 100,
     children,
   } = props;
 
@@ -83,6 +90,7 @@ export const Table = observer((props: TableProps) => {
     rows: rows,
     parentElemRef: tableElemRef,
     rowSize: rowSize,
+    enabled: virtual,
   });
 
   const cssVars = {
@@ -131,7 +139,7 @@ export const Table = observer((props: TableProps) => {
             classes={classes}
             columns={row.columns.map(addColumnDefaults)}
             style={{
-              gridRow: 3/*header + thead*/ + index + scrolledRowsCount,
+              gridRow: virtual ? (3/*header + thead*/ + index + scrolledRowsCount) : undefined,
               ...style,
             }}
           />

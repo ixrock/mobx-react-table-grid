@@ -55,9 +55,6 @@
 .row {
   &:not(.header) {
     display: contents; // ignore element in the DOM layout and use it's children in parent css-grid
-    //grid-column: 1 / -1; /* merge all columns for parent's table grid */
-    //display: grid; /* ignore element as direct css-grid child */
-    //grid-template-columns: inherit;
     transition: background-color ease-in-out .35s;
     gap: inherit;
 
