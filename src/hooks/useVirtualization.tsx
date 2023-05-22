@@ -23,14 +23,9 @@ export interface VirtualizedRow<DataItem = any> extends TableDataRow<DataItem> {
   size?: number; // px
 }
 
-export interface VirtualizedState {
-  scrollTop?: number;
-  rowsMap: Map<TableRowId, VirtualizedRow>;
-  virtualRows: VirtualizedRow[]; /* visible within or near viewport */
-  maxScrollHeight: number; /* max possible `parentGridElem.scrollHeight` */
-}
+export type VirtualizedState = ReturnType<typeof useVirtualization>;
 
-export function useVirtualization<D>(options: VirtualizationOptions<D>): VirtualizedState {
+export function useVirtualization<D>(options: VirtualizationOptions<D>) {
   const {
     parentElemRef,
     rows,
@@ -40,8 +35,10 @@ export function useVirtualization<D>(options: VirtualizationOptions<D>): Virtual
 
   const [scrollTop, setScrollTop] = useState(0);
   const [maxScrollHeight, setMaxScrollHeight] = useState(rows.length * approxRowSize);
-  const [scrolledItems, setScrolledRowsInfo] = useState<{ count: number, offset: number }>({ count: 0, offset: 0 });
-  const [visibleItemsCount, setVisibleItemsCount] = useState(initialVisibleRows); // TODO: calculate from viewport size (height)
+  const [hiddenScrolledRowsCount, setScrolledRowCount] = useState(0);
+  const [visibleRowsCount, setVisibleRowsCount] = useState(initialVisibleRows); // TODO: calculate from viewport size (height)
+  const [viewportHeight, setViewportHeight] = useState(0);
+
   const rowSize = useLocalObservable<Record<TableRowId, number>>(() => ({}));
 
   const allRows: Map<TableRowId, VirtualizedRow> = computed(() => {
@@ -67,11 +64,12 @@ export function useVirtualization<D>(options: VirtualizationOptions<D>): Virtual
   const visibleRows: VirtualizedRow[] = computed(() => {
     return Array
       .from(allRows.values())
-      .slice(0, scrolledItems.count + visibleItemsCount);
+      .slice(hiddenScrolledRowsCount, hiddenScrolledRowsCount + visibleRowsCount);
   }).get();
 
   useLayoutEffect(() => {
     const rootElem = parentElemRef.current as HTMLElement;
+    setViewportHeight(rootElem.offsetHeight);
 
     const observingRows = Array
       .from(rootElem.childNodes)
@@ -85,15 +83,16 @@ export function useVirtualization<D>(options: VirtualizationOptions<D>): Virtual
         const rowIndex = rowElem.dataset.index;
         if (!rowId) return; // skip: for `header`, `thead` and other possible custom rows
 
-        console.log(`ROW: #${rowIndex}`, { isVisible });
+        console.log(`ROW: #${rowIndex}, visible: ${isVisible}`);
         rowElem.dataset.visible = String(isVisible);
 
-        // free up UI freezing cause of repaint/reflow while reading `rowColumn` dimensions, e.g. `offsetTop`, getBoundingClientRect(), etc.
+        // free up UI freezing cause of repaint/reflow while reading dom-element dimensions, e.g. `offsetTop`, `scrollHeight`, etc.
         window.requestAnimationFrame(
           action(() => {
-            rowSize[rowId] = rowColumn.offsetHeight;
-            rowElem.style.setProperty(`--grid-row-size`, `${rowSize[rowId]}`);
-            rowElem.style.setProperty(`--grid-row-start`, `${allRows.get(rowId).start}`);
+            // TODO: reset on resize viewport dimensions change
+            if(rowSize[rowId] === undefined) {
+              rowSize[rowId] = rowColumn.offsetHeight;
+            }
 
             const maxScrollHeight = rows
               .map(row => rowSize[row.id] ?? approxRowSize)
@@ -106,7 +105,7 @@ export function useVirtualization<D>(options: VirtualizationOptions<D>): Virtual
     }, {
       root: rootElem,
       rootMargin: "50% 0px",
-      threshold: [0, 0.25, 0.5, 0.75, 1],
+      threshold: [0, 0.5, 1],
     });
 
     // FIXME: visibility observer callback don't called when `addedNodes` > 0
@@ -121,12 +120,14 @@ export function useVirtualization<D>(options: VirtualizationOptions<D>): Virtual
 
     const onScroll = () => {
       window.requestAnimationFrame(() => {
-        const scrollTop = rootElem.scrollTop;
-        const scrolledRowsInfo = getScrolledRowsInfo([...allRows.values()], scrollTop);
+        const { scrollTop, offsetHeight } = rootElem;
+        const rows = Array.from(allRows.values());
+        const scrolledRowsInfo = getScrolledRowsInfo(rows, scrollTop);
+        // const viewportRowsInfo = getScrolledRowsInfo(rows.slice(scrolledRowsInfo.count), offsetHeight);
 
         setScrollTop(scrollTop);
-        setScrolledRowsInfo(scrolledRowsInfo);
-        rootElem.style.setProperty("--grid-scroll-offset", `${scrolledRowsInfo.offset}px`);
+        setScrolledRowCount(scrolledRowsInfo.count);
+        // setViewportHeight(offsetHeight)
       });
     };
 
@@ -148,28 +149,27 @@ export function useVirtualization<D>(options: VirtualizationOptions<D>): Virtual
     virtualRows: visibleRows,
     scrollTop,
     maxScrollHeight,
+    viewportHeight,
+    visibleRowsCount,
+    hiddenScrolledRowsCount,
   };
 }
+
+
+// --Utils--
 
 function getScrolledRowsInfo(rows: VirtualizedRow[], scrollPos: number) {
   let scrolledItemsOffset = 0;
   let scrolledItemsCount = 0;
 
-  // FIXME
   for (const row of rows) {
     if (scrollPos > scrolledItemsOffset + row.size) {
-      console.log(`ROW SIZE: #${row.index}`, row.size)
       scrolledItemsOffset += row.size;
       scrolledItemsCount++;
     } else {
       break;
     }
   }
-
-  console.log({
-    count: scrolledItemsCount,
-    offset: scrolledItemsOffset,
-  })
 
   return {
     count: scrolledItemsCount,

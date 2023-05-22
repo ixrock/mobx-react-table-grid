@@ -67,7 +67,7 @@ export const Table = observer((props: TableProps) => {
     children,
   } = props;
 
-  const { maxScrollHeight, virtualRows } = useVirtualization({
+  const { maxScrollHeight, virtualRows, scrollTop, hiddenScrolledRowsCount } = useVirtualization({
     parentElemRef: tableElemRef,
     rows: rows,
   });
@@ -85,6 +85,7 @@ export const Table = observer((props: TableProps) => {
 
   return (
     <DndProvider backend={HTML5Backend}>
+      <p>Rows hidden: {hiddenScrolledRowsCount}</p>
       <div id={props.id} className={className} style={cssVars} ref={tableElemRef}>
         {header && (
           <TableRow
@@ -109,9 +110,10 @@ export const Table = observer((props: TableProps) => {
             classes={classes}
             style={{
               ...style,
-              // position: "absolute",
-              // height: `var(--grid-row-size)`,
-              // transform: `translateY(var(--grid-row-start))`,
+              // height: row.size,
+              // top: row.start,
+              gridRow: 3 + row.index + hiddenScrolledRowsCount,
+              // transform: `translateY(${scrollTop}px)`,
             }}
           />
         ))}

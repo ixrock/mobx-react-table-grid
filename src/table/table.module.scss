@@ -62,19 +62,17 @@
       background: var(--grid-row-highlight-bgc);
     }
   }
-
-  &:not(.thead) {
-    .column {
-      display: flex;
-      align-items: center;
-      height: inherit;
-      transform: inherit;
-    }
-  }
 }
 
 .column {
   padding: var(--grid-spacing);
+  display: flex;
+  align-items: center;
+  position: inherit;
+  top: inherit;
+  left: inherit;
+  grid-row: inherit;
+  transform: inherit;
 }
 
 .thead {
