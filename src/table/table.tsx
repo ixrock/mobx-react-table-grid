@@ -3,10 +3,10 @@ import React from "react";
 import { observer } from "mobx-react"
 import { DndProvider } from "react-dnd";
 import { HTML5Backend } from "react-dnd-html5-backend";
-import { useVirtualizer } from "@tanstack/react-virtual";
 import { TableDataRow, TableRow } from "./table-row";
 import type { TableDataColumn } from "./table-column";
 import { tableHeaderRowId, tableTheadRowId } from "./table-constants";
+import { useVirtualization } from "../hooks/useVirtualization";
 
 export interface TableProps<DataItem = any> {
   id?: string;
@@ -31,33 +31,10 @@ export interface TableProps<DataItem = any> {
    */
   rows: TableDataRow<DataItem>[];
   /**
-   * Usually it's should be the same as `props.header.offsetHeight` (when provided)
-   * @dependencies of `@tanstack/react-virtual`
-   */
-  paddingStart?: number;
-  /**
-   * Max expected row's height. Currently, all rows has that fixed size.
-   * @dependencies of `@tanstack/react-virtual`
-   * @default: 40
-   */
-  rowSize?: number;
-  /**
    * Min-size (width) for all columns by default, could be changed/resized from UI
    * @default 100
    */
   minSizeAllColumns?: number;
-  /**
-   * Extra items for creating as virtual rows within scrollable area of viewpoint (table)
-   * @default: 10
-   * @dependencies of `@tanstack/react-virtual`
-   */
-  overscan?: number;
-  /**
-   * Allows to have different sizes (heights) for rows, calculated from row-element when it's visible.
-   * Otherwise, `props.rowSize` would be used as fixed height for `virtualRow.size`
-   * @default false
-   */
-  dynamicRowSize?: boolean;
   /**
    * Allows to add custom static rows or some other contents (e.g. "+" button with `position: absolute`)
    */
@@ -89,29 +66,17 @@ export const Table = observer((props: TableProps) => {
   const {
     style = {},
     classes = {},
-    paddingStart = 0,
-    rowSize = 40,
-    overscan = 10,
     minSizeAllColumns = 100,
-    dynamicRowSize = false,
     header = null,
     rows = [],
     columns = [],
     children,
   } = props;
 
-  const virtualizer = useVirtualizer({
-    count: rows.length,
-    getScrollElement: () => tableElemRef.current,
-    getItemKey: (index: number) => String(rows[index].id ?? index),
-    estimateSize: (index: number) => rowSize,
-    paddingStart: rowSize + paddingStart,
-    overscan: overscan,
-    measureElement: (elem: HTMLElement) => elem?.scrollHeight ?? rowSize,
+  const { maxScrollHeight, virtualRows, scrollTop, hiddenScrolledRowsCount } = useVirtualization({
+    parentElemRef: tableElemRef,
+    rows: rows,
   });
-
-  const virtualRows = virtualizer.getVirtualItems();
-  const maxScrollHeight = virtualRows.length ? virtualizer.getTotalSize() : 0;
 
   const cssVars = {
     ...style,
@@ -134,6 +99,7 @@ export const Table = observer((props: TableProps) => {
 
   return (
     <DndProvider backend={HTML5Backend}>
+      <p>Rows hidden: {hiddenScrolledRowsCount}</p>
       <div id={props.id} className={className} style={cssVars} ref={tableElemRef}>
         {header && (
           <TableRow
@@ -151,28 +117,21 @@ export const Table = observer((props: TableProps) => {
           classes={classes}
           data={null}
         />
-        {virtualRows.map(virtualRow => {
-          const row = rows[virtualRow.index];
-          return (
-            <TableRow
-              {...row}
-              classes={classes}
-              key={virtualRow.key}
-              id={virtualRow.key}
-              index={virtualRow.index}
-              className={`${row.className ?? ""} ${dynamicRowSize ? styles.dynamicSize : ""}`}
-              elemRef={dynamicRowSize ? virtualizer.measureElement : undefined}
-              columns={row.columns.map(addColumnDefaults)}
-              style={{
-                ...row.style,
-                position: "absolute",
-                transform: `translateY(${virtualRow.start}px)`,
-                height: virtualRow.size,
-                width: "100%",
-              }}
-            />
-          );
-        })}
+        {virtualRows.map(row => (
+          <TableRow
+            {...row}
+            key={row.id as string}
+            classes={classes}
+            columns={row.columns.map(addColumnDefaults)}
+            style={{
+              ...style,
+              // height: row.size,
+              // top: row.start,
+              gridRow: 3 + row.index + hiddenScrolledRowsCount,
+              // transform: `translateY(${scrollTop}px)`,
+            }}
+          />
+        ))}
         {children}
       </div>
     </DndProvider>

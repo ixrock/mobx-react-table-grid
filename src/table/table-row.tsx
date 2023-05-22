@@ -25,7 +25,7 @@ export interface TableRowProps extends TableDataRow {
 
 export const TableRow = observer((rowProps: TableRowProps) => {
   const currentRow = { ...rowProps };
-  const { className, style = {}, columns, selectable, selected, classes = {}, elemRef, index } = rowProps;
+  const { className, style = {}, columns, selectable, selected, classes = {}, elemRef, index: rowIndex, id: rowId } = rowProps;
 
   const rowClassName: string = [
     styles.row,
@@ -42,7 +42,12 @@ export const TableRow = observer((rowProps: TableRowProps) => {
   };
 
   return (
-    <div className={rowClassName} style={style} data-index={index} onClick={onSelect} ref={elemRef}>
+    <div
+      className={rowClassName} style={style} onClick={onSelect}
+      data-id={typeof rowId !== "symbol" ? rowId : undefined}
+      data-index={rowIndex}
+      ref={elemRef}
+    >
       {columns.map(columnData => {
         return (
           <TableColumn
