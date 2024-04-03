@@ -112,12 +112,9 @@ export function createTableState<DataItem = any>(params: CreateTableStateParams<
         index: resourceIndex,
         data: resource,
         columns: tableColumns.get().map(column => {
-          return {
-            ...column,
-            get title() {
-              return column.renderValue?.(row, column)
-            },
-          }
+          return Object.defineProperty(column, 'title', {
+            get: () => column.renderValue?.(row, column)
+          })
         }),
         get selected() {
           return selectedRowsId.has(row.id);
