@@ -1,11 +1,9 @@
-@ixrock/mobx-react-table-grid
-==
-
-Easy to use and powerful table grid React-js component based on CSS-grid 
+Easy to use table component powered by CSS-grid & React/MobX 
+----
 
 ## Install | [npm](https://www.npmjs.com/package/mobx-react-table-grid)
 ```
-npm install mobx-react-table-grid --save
+npm install mobx-react-table-grid
 ```
 
 ## Benefits
@@ -27,7 +25,7 @@ npm install mobx-react-table-grid --save
 
 
 ```
-git checkout git@github.com:ixrock/mobx-react-table-grid.git
+npm install mobx-react-table-grid
 npm install
 npm run dev
 ```
@@ -40,7 +38,7 @@ npm run dev
 ```tsx
 import "mobx-react-table-grid/index.css"; // import styles (e.g. via webpack)
 import React from "react"
-import ReactDOM from "react-dom"
+import { createRoot } from "react-dom/client" // react@18+
 import { observable } from "mobx"
 import { observer } from "mobx-react"
 import { createTableState, Table } from "mobx-react-table-grid";
@@ -98,5 +96,7 @@ const Demo = observer(() => {
   />
 });
 
-ReactDOM.render(<Demo/>, document.getElementById('app'));
+// react@18+
+const appRootElem = document.getElementById("app");
+createRoot(appRootElem).render(<Demo/>);
 ```
