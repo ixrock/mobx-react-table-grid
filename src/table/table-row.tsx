@@ -1,6 +1,5 @@
-import styles from "./table.module.scss";
+import * as styles from "./table.module.css";
 import React from "react";
-import { observer } from "mobx-react"
 import { TableColumn, TableDataColumn } from "./table-column";
 import type { TableClassNames } from "./table";
 
@@ -23,7 +22,7 @@ export interface TableRowProps extends TableDataRow {
   elemRef?: React.Ref<HTMLDivElement>;
 }
 
-export const TableRow = observer((rowProps: TableRowProps) => {
+export function TableRow(rowProps: TableRowProps) {
   const currentRow = { ...rowProps };
   const { className, style = {}, columns, selectable, selected, classes = {}, elemRef, index: rowIndex, id: rowId } = rowProps;
 
@@ -60,4 +59,4 @@ export const TableRow = observer((rowProps: TableRowProps) => {
       })}
     </div>
   )
-});
+}

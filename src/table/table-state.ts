@@ -1,12 +1,18 @@
 import type React from "react";
 import { action, computed, IComputedValue, IObservableValue, observable } from "mobx"
-import type { TableColumnId, TableDataColumn, TableDataRow, TableRowId } from "./index";
+import { exportState, TableColumnId, TableDataColumn, TableDataRow, TableRowId } from "./index";
 import orderBy from "lodash/orderBy";
 
-export type CreatedTableState<DataItem> = ReturnType<typeof createTableState<DataItem>>; /* observables + computed */
-export type StorableCreateTableState<DataItem> = ReturnType<typeof exportState<DataItem>>; /* plain json */
+export type CreatedTableState<DataItem = any> = ReturnType<typeof createTableState<DataItem>>; /* observables + computed */
+export type StorableCreateTableState<DataItem = any> = ReturnType<typeof exportState<DataItem>>; /* plain json */
+
+export interface ResourceWithId {
+  id?: TableRowId;
+  getId?(): TableRowId;
+}
 
 export interface CreateTableStateParams<ResourceItem = any> {
+  tableId: string;
   dataItems: IComputedValue<ResourceItem[]>;
   /**
    * Columns definition as `Table.props.columns`.
@@ -18,10 +24,9 @@ export interface CreateTableStateParams<ResourceItem = any> {
    */
   customizeRows?: (row: TableDataRow<ResourceItem>) => Partial<TableDataRow<ResourceItem>>;
   /**
-   * Provide identification for data items
-   * By default, tries to get unique ID via `dataItem.getById()` or `dataItem.id`
+   * Provide uniq ID for data items
    */
-  getRowId?: (dataItem: ResourceItem) => TableRowId;
+  getRowId?: (dataItem: ResourceItem & ResourceWithId) => TableRowId;
   /**
    * Handle filtering results with search field
    * mobx.computed() or mobx.observable.box() that participates in filtered rows state.
@@ -29,17 +34,18 @@ export interface CreateTableStateParams<ResourceItem = any> {
   searchBox?: IComputedValue<string> | IObservableValue<string>;
 }
 
+// TODO: split into multiple files for better readability
 export function createTableState<DataItem = any>(params: CreateTableStateParams<DataItem>) {
-  const { headingColumns, dataItems, customizeRows, getRowId, searchBox } = params;
+  const { tableId, dataItems, customizeRows, getRowId, searchBox } = params;
 
-  const searchText = searchBox ?? observable.box("");
-  const hiddenColumns = observable.set<TableColumnId>();
-  const selectedRowsId = observable.set<TableRowId>();
-  const sortedColumns = observable.map<TableColumnId, "asc" | "desc">();
-  const columnsOrder = observable.array<TableColumnId>(); // columns could be reordered by d&d
-  const columnSizes = observable.map<TableColumnId, string>(); // columns could be resized
+  const searchText = searchBox ?? observable.box("", { name: "search-box" });
+  const hiddenColumns = observable.set<TableColumnId>([], { name: "hidden-columns" });
+  const selectedRowsId = observable.set<TableRowId>([], { name: "selected-rows" });
+  const sortedColumns = observable.map<TableColumnId, "asc" | "desc">({}, { name: "sorted-columns" });
+  const columnsOrder = observable.array<TableColumnId>([], { name: "columns-order" }); // columns could be reordered by d&d
+  const columnSizes = observable.map<TableColumnId, string>([], { name: "columns-size" }); // columns could be resized
 
-  const tableColumnsAll: TableDataColumn<DataItem>[] = headingColumns.map((headColumn) => {
+  const headingColumns: TableDataColumn<DataItem>[] = params.headingColumns.map((headColumn) => {
     const dataColumn = {} as TableDataColumn<DataItem>;
     const columnDescriptorsInitial = Object.getOwnPropertyDescriptors<TableDataColumn<DataItem>>(headColumn);
     const columnDescriptorsEvents = Object.getOwnPropertyDescriptors<Partial<TableDataColumn<DataItem>>>({
@@ -59,7 +65,7 @@ export function createTableState<DataItem = any>(params: CreateTableStateParams<
 
       // re-ordering columns state
       onDragAndDrop: action(({ draggable, droppable }) => {
-        const currentOrder = columnsOrder.length ? [...columnsOrder] : tableColumnsAll.map(column => column.id);
+        const currentOrder = columnsOrder.length ? [...columnsOrder] : headingColumns.map(column => column.id);
         const dragIndex = currentOrder.indexOf(draggable.id);
         const dropIndex = currentOrder.indexOf(droppable.id);
         const firstItem = currentOrder[dragIndex];
@@ -80,42 +86,37 @@ export function createTableState<DataItem = any>(params: CreateTableStateParams<
       }),
     } as Partial<TableDataColumn<DataItem>>);
 
-    // don't call any getters at early stage (e.g. `get title(): ReactNode`)
     return Object.defineProperties(dataColumn, {
       ...columnDescriptorsInitial,
       ...columnDescriptorsEvents,
     });
   });
 
-  const tableColumns = computed<TableDataColumn<DataItem>[]>(() => {
+  const headingColumnsReordered = computed<TableDataColumn<DataItem>[]>(() => {
     if (columnsOrder.length) {
       return columnsOrder
-        .map(columnId => tableColumnsAll.find(column => column.id === columnId))
+        .map(columnId => headingColumns.find(column => column.id === columnId))
         .filter(col => !hiddenColumns.has(col.id));
     } else {
-      return tableColumnsAll.filter(col => !hiddenColumns.has(col.id));
+      return headingColumns.filter(col => !hiddenColumns.has(col.id));
     }
+  }, {
+    name: "table-columns"
   });
 
-  const getRowIdFromDataItem = (resource: DataItem, index: number) => {
-    return getRowId?.(resource)
-      ?? (resource as any).id ?? (resource as any).getId?.()
-      ?? index.toString();
+  const getRowIdFromDataItem = (resource: DataItem & ResourceWithId, index: number) => {
+    return getRowId?.(resource) ?? resource.id ?? resource.getId?.() ?? String(index);
   };
 
   const tableRows = computed<TableDataRow<DataItem>[]>(() => {
     return dataItems.get().map((resource, resourceIndex) => {
-      const row: TableDataRow<DataItem> = {
+      let row: TableDataRow<DataItem> = {
         get id() {
           return getRowIdFromDataItem(resource, resourceIndex);
         },
         index: resourceIndex,
         data: resource,
-        columns: tableColumns.get().map(column => {
-          return Object.defineProperty(column, 'title', {
-            get: () => column.renderValue?.(row, column)
-          })
-        }),
+        columns: headingColumnsReordered.get(),
         get selected() {
           return selectedRowsId.has(row.id);
         },
@@ -132,11 +133,13 @@ export function createTableState<DataItem = any>(params: CreateTableStateParams<
       const customizedRow = customizeRows?.(row);
       if (customizedRow) {
         const { onSelect, ...rowOverrides } = customizedRow;
-        return Object.defineProperties(row, Object.getOwnPropertyDescriptors(rowOverrides));
+        row = Object.defineProperties(row, Object.getOwnPropertyDescriptors(rowOverrides));
       }
 
       return row;
     });
+  }, {
+    name: "table-rows"
   });
 
   const sortedTableRows = computed<TableDataRow<DataItem>[]>(() => {
@@ -144,13 +147,15 @@ export function createTableState<DataItem = any>(params: CreateTableStateParams<
     const sortingOrders = Array.from(sortedColumns.values());
 
     const sortingCallbacks = sortedColumnIds.map(columnId => {
-      const column = tableColumnsAll.find(col => col.id === columnId);
+      const column = headingColumns.find(col => col.id === columnId);
       return (row: TableDataRow<DataItem>) => {
         return column?.sortValue?.(row, column) ?? column?.renderValue?.(row, column);
       }
     });
 
     return orderBy(tableRows.get(), sortingCallbacks, sortingOrders);
+  }, {
+    name: "sorted-table-rows"
   });
 
   const searchResultTableRows = computed<TableDataRow<DataItem>[]>(() => {
@@ -163,25 +168,39 @@ export function createTableState<DataItem = any>(params: CreateTableStateParams<
         }
       })
     })
+  }, {
+    name: "search-results-table-rows",
   });
 
   const searchResultTableRowIds = computed<TableRowId[]>(() => {
     return searchResultTableRows.get().map(row => row.id);
+  }, {
+    name: "search-result-table-rows-id",
   });
 
   const selectedTableRowsAll = computed<TableDataRow<DataItem>[]>(() => {
     return tableRows.get().filter(row => selectedRowsId.has(row.id));
+  }, {
+    name: "selected-table-rows-all",
   });
 
   const selectedTableRowsFiltered = computed<TableDataRow<DataItem>[]>(() => {
     return searchResultTableRows.get().filter(row => selectedRowsId.has(row.id));
+  }, {
+    name: "selected-table-rows-filtered",
   });
 
   const tableRowIds = computed<TableRowId[]>(() => {
     return dataItems.get().map((dataItem, index) => getRowIdFromDataItem(dataItem, index));
+  }, {
+    name: "table-rows-id",
   });
 
-  const isSelectedAll = computed<boolean>(() => tableRowIds.get().every(rowId => selectedRowsId.has(rowId)));
+  const isSelectedAll = computed<boolean>(() => {
+    return tableRowIds.get().every(rowId => selectedRowsId.has(rowId));
+  }, {
+    name: "is-selected-all",
+  });
 
   const toggleRowSelectionAll = action((force?: boolean) => {
     if (!isSelectedAll.get() && !force) {
@@ -200,13 +219,14 @@ export function createTableState<DataItem = any>(params: CreateTableStateParams<
   });
 
   return {
+    tableId,
     searchText,
     columnSizes,
     columnsOrder,
     hiddenColumns,
     sortedColumns,
-    tableColumns,
-    tableColumnsAll,
+    headingColumns,
+    headingColumnsReordered,
     tableRowIds,
     tableRows,
     sortedTableRows,
@@ -218,35 +238,5 @@ export function createTableState<DataItem = any>(params: CreateTableStateParams<
     isSelectedAll,
     toggleRowSelection,
     toggleRowSelectionAll,
-  }
-}
-
-export interface ImportStateParams<DataItem> {
-  tableState: CreatedTableState<DataItem>;
-  storedState?: StorableCreateTableState<DataItem>;
-}
-
-export function importState<DataItem>({ tableState, storedState }: ImportStateParams<DataItem>) {
-  if (!storedState) return;
-  const { columnsSizes = [], sortedColumns = [], columnsOrder, hiddenColumns = [], selectedRowsId = [], searchText = "" } = storedState;
-
-  tableState.searchText.set(searchText);
-  tableState.sortedColumns.replace(sortedColumns);
-  tableState.columnsOrder.replace(columnsOrder);
-  tableState.columnSizes.replace(columnsSizes);
-  tableState.hiddenColumns.replace(hiddenColumns);
-  tableState.selectedRowsId.replace(selectedRowsId);
-}
-
-export function exportState<DataItem>(state: CreatedTableState<DataItem>) {
-  const { searchText, hiddenColumns, selectedRowsId, sortedColumns, columnSizes, columnsOrder } = state;
-
-  return {
-    searchText: searchText.get(),
-    hiddenColumns: hiddenColumns.toJSON(),
-    selectedRowsId: selectedRowsId.toJSON(),
-    sortedColumns: sortedColumns.toJSON(),
-    columnsOrder: columnsOrder.toJSON(),
-    columnsSizes: columnSizes.toJSON(),
   }
 }

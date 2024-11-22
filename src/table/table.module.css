@@ -1,7 +1,9 @@
 
 .table {
-  /* default "auto"-size for all columns */
-  --grid-col-size: minmax(min-content, 1fr);
+  --grid-col-size: minmax(min-content, 1fr); /* default "auto"-size for all columns */
+  --grid-cols: 12; /* grid columns size, defined in <Table> */
+  --grid-row-size: 40px; /* fixed row height, defined in <Table> */
+  --grid-virtual-max-height: 100%; /* max-scroll height, defined in <Table> */
 
   --grid-row-highlight-bgc: #000000aa;
   --grid-row-selected-bgc: #3d90ce;
@@ -17,10 +19,9 @@
   display: grid;
   grid-template-columns: var(--grid-cols) !important;
   grid-auto-rows: var(--grid-row-size) !important;
-  grid-template-rows: auto auto !important; // header, thead
+  grid-template-rows: auto auto !important; /* header, thead*/
   grid-auto-flow: row dense;
   flex: 1;
-  height: var(--grid-height);
   width: 100%;
   align-content: start;
   justify-items: stretch;
@@ -54,7 +55,7 @@
 
 .row {
   &:not(.header) {
-    display: contents; // ignore element in the DOM layout and use it's children in parent css-grid
+    display: contents; /*ignore element in the DOM layout and use it's children in parent css-grid*/
     transition: background-color ease-in-out .35s;
     gap: inherit;
 
@@ -143,7 +144,7 @@
   top: 0;
   right: 0;
   width: var(--grid-resizer-width);
-  height: var(--grid-virtual-max-height, 100%);
+  height: var(--grid-virtual-max-height);
   background: linear-gradient(180deg, var(--grid-resizing-color), transparent) 50% repeat-y;
   background-size: 1px;
   transition: background-color .15s;
@@ -197,8 +198,8 @@
 }
 
 svg.dragIcon {
-  //position: absolute;
-  //right: 10px;
+  /*position: absolute;*/
+  /*right: 10px;*/
   flex-shrink: 0;
   cursor: grab;
   opacity: .5;

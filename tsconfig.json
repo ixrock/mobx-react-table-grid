@@ -4,7 +4,7 @@
     "jsx": "react",
     "target": "ES2019",
     "lib": ["ESNext", "DOM", "DOM.Iterable"],
-    "module": "CommonJS",
+    "module": "ESNext",
     "moduleResolution": "node",
     "allowJs": true,
     "sourceMap": true,
@@ -26,7 +26,7 @@
   },
   "include": [
     "src",
-    "types",
+    "**/*.d.ts",
     "webpack.config.ts"
   ],
   "exclude": [

@@ -1,6 +1,5 @@
-import styles from "./table.module.scss";
+import * as styles from "./table.module.css";
 import React from "react";
-import { observer } from "mobx-react"
 import type { TableClassNames } from "./table";
 import type { TableDataRow } from "./table-row";
 import { useDrag, useDrop } from "react-dnd";
@@ -74,7 +73,7 @@ export interface TableDataColumn<DataItem = any> {
   /**
    * Callback to be used in data sorting items in every row and column
    * By default, if this `data-getter` is not provided `renderValue(): ReactNode` would be used instead.
-   * NOTE: sorting doesn't work correctly if `renderValue()` returns not a `string` or `number`.
+   * WARNING: sorting doesn't work correctly if `renderValue()` returns `React.ReactNode` (not a "string" or "number")
    */
   sortValue?: (row: TableDataRow<DataItem>, col: TableDataColumn<DataItem>) => string | number,
   /**
@@ -90,25 +89,28 @@ export interface TableColumnProps extends TableDataColumn {
   elemRef?: React.RefCallback<HTMLDivElement>;
 }
 
-export const TableColumn = observer((columnProps: TableColumnProps) => {
+export function TableColumn(columnProps: TableColumnProps) {
   const {
     id: columnId,
     className, title, style, parentRow, sortingOrder,
-    sortable = true, draggable = true, resizable = true,
-    minSize, classes = {}, elemRef,
+    sortable = true,
+    draggable = true,
+    resizable = true,
+    minSize, classes = {}, elemRef, renderValue,
   } = columnProps;
+  const columnDataItem = { ...columnProps, resizable, draggable, sortable };
 
   const isHeadingRow = parentRow.id === tableTheadRowId;
   const isDraggableEnabled = isHeadingRow && draggable;
   const isSortableEnabled = isHeadingRow && sortable;
   const isResizingEnabled = isHeadingRow && resizable;
-  const columnDataItemCopy = { ...columnProps };
   const resizeStartOffset = { x: 0, y: 0 };
   let isDragging = false;
 
+  // FIXME: window tab crash on D&D
   const [dragMetrics, dragRef] = isDraggableEnabled ? useDrag({
     type: tableColumnSortableType,
-    item: columnDataItemCopy,
+    item: columnDataItem,
     collect(monitor) {
       return {
         [`${styles.isDragging} ${classes.draggableColumnActive ?? ""}`]: monitor.isDragging(),
@@ -121,9 +123,9 @@ export const TableColumn = observer((columnProps: TableColumnProps) => {
     drop: (item: TableDataColumn, monitor) => {
       columnProps.onDragAndDrop?.({
         draggable: item,
-        droppable: columnDataItemCopy,
+        droppable: columnDataItem,
       });
-      return columnDataItemCopy;
+      return columnDataItem;
     },
     collect(monitor) {
       return {
@@ -167,7 +169,7 @@ export const TableColumn = observer((columnProps: TableColumnProps) => {
     if (isDragging) return; // skip sorting if reordering columns has started
 
     if (isHeadingRow && sortable) {
-      columnProps.onSorting?.(parentRow, columnDataItemCopy, evt);
+      columnProps.onSorting?.(parentRow, columnDataItem, evt);
     }
   }, 50) : undefined;
 
@@ -250,10 +252,10 @@ export const TableColumn = observer((columnProps: TableColumnProps) => {
           {isDraggableEnabled && <TableColumnDragIconSvg className={classes.draggableIcon}/>}
         </>
       )}
-      {!isHeadingRow && title}
+      {!isHeadingRow && (renderValue?.(parentRow, columnDataItem) ?? title)}
     </div>
   )
-});
+}
 
 export function TableColumnDragIconSvg(props: React.PropsWithChildren & { className?: string }) {
   const className = `${styles.dragIcon} ${props.className ?? ""}`;

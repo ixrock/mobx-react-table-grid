@@ -1,17 +1,18 @@
 {
   "name": "mobx-react-table-grid",
-  "version": "2.0.1",
+  "version": "2.1.0",
   "description": "Easy to use and powerful react table-grid layout based on CSS-grid",
   "license": "MIT",
   "author": "ixrock",
   "scripts": {
-    "dev": "webpack serve --mode development --open",
+    "dev": "webpack serve --mode development --port 9001 --client-overlay",
     "build": "npm run build:clean && npm run build-lib && npm run build-types",
     "build-lib": "NODE_ENV=production webpack --mode production",
     "build-types": "tsc --project tsconfig-build-types.json",
     "build:clean": "rimraf ./dist/",
     "release-pack": "npm run build && npm pack ./dist",
-    "release-publish": "npm run build && npm publish ./dist"
+    "release-publish": "npm run build && npm publish ./dist",
+    "update-deps": "npx npm-check-updates -u && npx npm-check-updates -u --dep peer"
   },
   "main": "index.js",
   "types": "types/index.d.ts",
@@ -27,34 +28,30 @@
     "url": "https://github.com/ixrock/mobx-react-table-grid/issues"
   },
   "devDependencies": {
-    "@types/copy-webpack-plugin": "^10.1.0",
-    "copy-webpack-plugin": "^11.0.0",
-    "css-loader": "^6.7.3",
+    "copy-webpack-plugin": "^12.0.2",
+    "css-loader": "^7.1.2",
     "fakerator": "^0.3.6",
-    "fork-ts-checker-webpack-plugin": "^8.0.0",
-    "html-webpack-plugin": "^5.5.0",
-    "mini-css-extract-plugin": "^2.7.5",
-    "rimraf": "5.0.0",
-    "sass": "^1.62.1",
-    "sass-loader": "^13.2.2",
-    "style-loader": "^3.3.2",
-    "ts-loader": "^9.4.2",
-    "ts-node": "^10.9.1",
-    "typescript": "^5.0.4",
-    "webpack": "^5.78.0",
-    "webpack-cli": "^5.0.1",
-    "webpack-dev-server": "^4.13.2"
+    "fork-ts-checker-webpack-plugin": "^9.0.2",
+    "html-webpack-plugin": "^5.6.3",
+    "mini-css-extract-plugin": "^2.9.2",
+    "rimraf": "6.0.1",
+    "ts-loader": "^9.5.1",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.6.3",
+    "webpack": "^5.96.1",
+    "webpack-cli": "^5.1.4",
+    "webpack-dev-server": "^5.1.0"
   },
   "peerDependencies": {
-    "@types/lodash": "^4.14.194",
-    "@types/react": "^17 || ^18",
-    "@types/react-dom": "^17 || ^18",
+    "@types/lodash": "^4.17.13",
+    "@types/react": "^18",
+    "@types/react-dom": "^18",
     "lodash": "^4.17.21",
-    "mobx": "^6.9.0",
-    "mobx-react": "^7.6.0",
-    "react": "^17 || ^18",
-    "react-dnd": "^15",
-    "react-dnd-html5-backend": "^15",
-    "react-dom": "^17 || ^18"
+    "mobx": "^6.13.5",
+    "mobx-react": "^9.1.1",
+    "react": "^18",
+    "react-dnd": "^16",
+    "react-dnd-html5-backend": "^16",
+    "react-dom": "^18"
   }
 }

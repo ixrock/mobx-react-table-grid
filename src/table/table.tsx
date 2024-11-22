@@ -1,4 +1,4 @@
-import styles from "./table.module.scss";
+import * as styles from "./table.module.css";
 import React from "react";
 import { observer } from "mobx-react"
 import { DndProvider } from "react-dnd";

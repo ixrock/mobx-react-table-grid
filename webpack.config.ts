@@ -19,7 +19,7 @@ const externals = Object.keys(packageJson.peerDependencies)
   }, {})
 ;
 
-module.exports = {
+const config: webpack.Configuration = {
   mode: isDevelopment ? 'development' : 'production',
   entry: isDevelopment ? {
     demo: './src/demo.tsx',
@@ -63,9 +63,9 @@ module.exports = {
         ],
       },
       {
-        test: /\.s?css$/,
+        test: /\.?css$/,
         use: [
-          isDevelopment ? 'style-loader' : MiniCssExtractPlugin.loader,
+          MiniCssExtractPlugin.loader,
           {
             loader: 'css-loader',
             options: {
@@ -77,15 +77,6 @@ module.exports = {
               },
             },
           },
-          {
-            loader: "sass-loader",
-            options: {
-              sourceMap: isDevelopment,
-              sassOptions: {
-                outputStyle: "expanded"
-              }
-            },
-          }
         ],
       },
       {
@@ -95,16 +86,17 @@ module.exports = {
     ],
   },
   plugins: [
+    new MiniCssExtractPlugin(),
+
     ...(isDevelopment ? [
       new ForkTsCheckerWebpackPlugin(),
       new HtmlWebpackPlugin({
-        title: 'Demo: mobx-react-css-grid-table',
+        title: 'Demo for NPM package "mobx-react-css-grid-table"',
         template: path.resolve(__dirname, 'public/index.html'),
         filename: 'index.html',
         inject: true
       }),
     ] : [
-      new MiniCssExtractPlugin(),
       new CopyWebpackPlugin({
         patterns: [
           { from: "LICENSE" },
@@ -115,11 +107,6 @@ module.exports = {
     ]),
 
   ],
-  devServer: {
-    compress: true,
-    port: 9001,
-    client: {
-      overlay: false
-    }
-  },
-} as webpack.Configuration;
+};
+
+export default config;

@@ -1,7 +1,6 @@
-import React from "react";
 import Fakerator from "fakerator";
 
-export type ResourceStub = ReturnType<typeof makeData>[0];
+export type ResourceStub = ReturnType<typeof generateDemoData>[0];
 
 export const enum ResourceColumnId {
   name = "name",
@@ -14,7 +13,7 @@ export const enum ResourceColumnId {
   age = "age",
 }
 
-export function makeData(len: number) {
+export function generateDemoData(itemsCount: number) {
   const pods = [];
   const fakerator = Fakerator();
   const namespaces = [
@@ -40,7 +39,7 @@ export function makeData(len: number) {
     "Pending"
   ]
 
-  for (let i = 0; i < len; i++) {
+  for (let i = 0; i < itemsCount; i++) {
     const name = fakerator.names.name();
     const namespace = namespaces[getRandomIndex(namespaces.length)]
     const node = nodes[getRandomIndex(nodes.length)]
@@ -74,44 +73,4 @@ export function makeData(len: number) {
 
 export function getRandomIndex(arrayLength: number): number {
   return Math.floor(Math.random() * arrayLength);
-}
-
-export function renderContainers(num: number): React.ReactNode {
-  const containers: React.ReactNode[] = [];
-
-  for (let i = 0; i < num; i++) {
-    containers.push(
-      <div key={`container-${i}`} style={{
-        width: "8px",
-        height: "8px",
-        backgroundColor: "rgb(28 199 77)"
-      }}></div>
-    )
-  }
-
-  return (
-    <div style={{ display: "flex", "gap": "0.3rem", flexWrap: "wrap" }}>
-      {containers}
-    </div>
-  )
-}
-
-export function renderStatus(status: string): React.ReactNode {
-  let color = "inherit";
-
-  switch (status) {
-  case "Running":
-    color = "rgb(28 199 77)";
-    break;
-  case "Pending":
-    color = "orange"
-    break
-  case "Failed":
-    color = "crimson"
-    break
-  }
-
-  return (
-    <span style={{ color }}>{status}</span>
-  )
 }
