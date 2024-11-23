@@ -5,7 +5,7 @@
   "license": "MIT",
   "author": "ixrock",
   "scripts": {
-    "dev": "webpack serve --mode development --port 9001 --client-overlay",
+    "dev": "webpack serve --mode development --port 9001 --client-overlay --open",
     "build": "npm run build:clean && npm run build-lib && npm run build-types",
     "build-lib": "NODE_ENV=production webpack --mode production",
     "build-types": "tsc --project tsconfig-build-types.json",

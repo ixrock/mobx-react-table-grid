@@ -86,26 +86,23 @@ const config: webpack.Configuration = {
     ],
   },
   plugins: [
-    new MiniCssExtractPlugin(),
-
     ...(isDevelopment ? [
       new ForkTsCheckerWebpackPlugin(),
       new HtmlWebpackPlugin({
-        title: 'Demo for NPM package "mobx-react-css-grid-table"',
         template: path.resolve(__dirname, 'public/index.html'),
         filename: 'index.html',
         inject: true
       }),
-    ] : [
-      new CopyWebpackPlugin({
-        patterns: [
-          { from: "LICENSE" },
-          { from: "README.md" },
-          { from: "package.json" },
-        ]
-      }),
-    ]),
+    ] : []),
 
+    new MiniCssExtractPlugin(),
+    new CopyWebpackPlugin({
+      patterns: [
+        { from: "LICENSE" },
+        { from: "README.md" },
+        { from: "package.json" },
+      ]
+    }),
   ],
 };
 

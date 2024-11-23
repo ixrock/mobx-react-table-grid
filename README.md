@@ -21,16 +21,13 @@ npm install mobx-react-table-grid
 
 ## Demo
 
-![Screenshot](./public/demo-sshot.png)
-
-
 ```
-npm install mobx-react-table-grid
+git clone https://github.com/ixrock/mobx-react-table-grid.git
 npm install
 npm run dev
 ```
 
-
+![Screenshot](./public/demo-sshot.png)
 
 
 ## Example
