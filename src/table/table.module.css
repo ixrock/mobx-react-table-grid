@@ -188,6 +188,7 @@ svg.resizeIcon {
   visibility: hidden;
   width: var(--grid-drag-icon-size);
   height: var(--grid-drag-icon-size);
+  z-index: 1;
 }
 
 @keyframes bounce {
