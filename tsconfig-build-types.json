@@ -6,7 +6,7 @@
     "declarationDir": "dist/types"
   },
   "include": [
-    "types",
+    "**/*.d.ts",
     "src/table/index.ts"
   ]
 }
