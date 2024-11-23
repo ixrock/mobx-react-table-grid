@@ -4,7 +4,6 @@
   --grid-cols: 12; /* grid columns size, defined in <Table> */
   --grid-row-size: 40px; /* fixed row height, defined in <Table> */
   --grid-virtual-max-height: 100%; /* max-scroll height, defined in <Table> */
-
   --grid-row-highlight-bgc: #000000aa;
   --grid-row-selected-bgc: #3d90ce;
   --grid-row-selected-color: white;
@@ -103,11 +102,7 @@
     }
 
     &:hover {
-      .isResizable {
-        display: block;
-      }
-
-      .dragIcon {
+      .resizeIcon {
         visibility: visible;
       }
     }
@@ -137,20 +132,6 @@
   border-style: solid;
   border-width: 8.7px 5px 0 5px;
   border-color: currentColor transparent transparent transparent;
-}
-
-.isResizable {
-  position: absolute;
-  top: 0;
-  right: 0;
-  width: var(--grid-resizer-width);
-  height: var(--grid-virtual-max-height);
-  background: linear-gradient(180deg, var(--grid-resizing-color), transparent) 50% repeat-y;
-  background-size: 1px;
-  transition: background-color .15s;
-  cursor: col-resize;
-  z-index: 10;
-  display: none;
 }
 
 /* multi ordering/sorting data in columns (asc/desc) */
@@ -198,14 +179,13 @@
   }
 }
 
-svg.dragIcon {
-  /*position: absolute;*/
-  /*right: 10px;*/
+svg.resizeIcon {
+  position: absolute;
+  right: 10px;
   flex-shrink: 0;
-  cursor: grab;
+  cursor: col-resize;
   opacity: .5;
   visibility: hidden;
-  pointer-events: none;
   width: var(--grid-drag-icon-size);
   height: var(--grid-drag-icon-size);
 }

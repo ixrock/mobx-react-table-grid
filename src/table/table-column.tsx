@@ -1,3 +1,5 @@
+// TODO: split into multiple files for better readability
+
 import * as styles from "./table.module.css";
 import React from "react";
 import type { TableClassNames } from "./table";
@@ -92,21 +94,18 @@ export interface TableColumnProps extends TableDataColumn {
 export function TableColumn({ parentRow, ...columnProps }: TableColumnProps) {
   const isHeadingRow = parentRow.id === tableTheadRowId;
   const {
-    id: columnId, className, title, style, sortingOrder,
+    id: columnId,
+    className, title, style, sortingOrder,
     sortable = isHeadingRow,
     draggable = isHeadingRow,
     resizable = isHeadingRow,
     minSize, classes = {}, elemRef, renderValue,
   } = columnProps;
-  const columnDataItem = { ...columnProps, resizable, draggable, sortable };
-
-  const isDraggableEnabled = isHeadingRow && draggable;
-  const isSortableEnabled = isHeadingRow && sortable;
-  const isResizingEnabled = isHeadingRow && resizable;
+  const columnDataItem = { ...columnProps, resizable, draggable, sortable, classes };
   const resizeStartOffset = { x: 0, y: 0 };
   let isDragging = false;
 
-  const [dragMetrics, dragRef] = isDraggableEnabled ? useDrag({
+  const [dragMetrics, dragRef] = draggable ? useDrag({
     type: tableColumnSortableType,
     item: columnDataItem,
     collect(monitor) {
@@ -116,7 +115,7 @@ export function TableColumn({ parentRow, ...columnProps }: TableColumnProps) {
     },
   }) : [];
 
-  const [dropMetrics, dropRef] = isDraggableEnabled ? useDrop({
+  const [dropMetrics, dropRef] = draggable ? useDrop({
     accept: tableColumnSortableType,
     drop: (item: TableDataColumn, monitor) => {
       columnProps.onDragAndDrop?.({
@@ -133,14 +132,14 @@ export function TableColumn({ parentRow, ...columnProps }: TableColumnProps) {
     },
   }) : [];
 
-  const draggableClasses = isDraggableEnabled ? [
+  const draggableClasses = draggable ? [
     styles.isDraggable,
     classes.draggableColumn ?? "",
     ...Object.entries(dragMetrics ?? {}).filter(([, enabled]) => enabled).map(([className]) => className.trim()),
     ...Object.entries(dropMetrics ?? {}).filter(([, enabled]) => enabled).map(([className]) => className.trim()),
   ] : [];
 
-  const sortableClasses = isSortableEnabled ? [
+  const sortableClasses = sortable ? [
     styles.isSortable,
     classes.sortableColumn ?? "",
   ] : [];
@@ -156,14 +155,14 @@ export function TableColumn({ parentRow, ...columnProps }: TableColumnProps) {
   const columnClassName = [
     styles.column,
     classes.columnBaseClass,
-    isResizingEnabled ? classes.resizableColumn ?? "" : "",
+    resizable ? classes.resizableColumn ?? "" : "",
     ...draggableClasses,
     ...sortableClasses,
     className,
   ].filter(Boolean).join(" ");
 
   // debouncing for checking drag&drop event firing state before sorting anything out ;)
-  const onSorting = isSortableEnabled ? debounce(evt => {
+  const onSorting = sortable ? debounce(evt => {
     if (isDragging) return; // skip sorting if reordering columns has started
 
     if (isHeadingRow && sortable) {
@@ -171,12 +170,12 @@ export function TableColumn({ parentRow, ...columnProps }: TableColumnProps) {
     }
   }, 50) : undefined;
 
-  const onResizeStart = isResizingEnabled ? (evt: React.MouseEvent) => {
+  const onResizeStart = resizable ? (evt: React.MouseEvent) => {
     evt.stopPropagation();
     evt.preventDefault();
 
     const resizerElem = evt.target as HTMLElement;
-    let columnWidth = resizerElem.parentElement.scrollWidth;
+    let columnWidth = resizerElem.closest(`.${styles.column}`).scrollWidth;
 
     resizeStartOffset.x = evt.pageX;
     resizeStartOffset.y = evt.pageY;
@@ -208,24 +207,24 @@ export function TableColumn({ parentRow, ...columnProps }: TableColumnProps) {
     });
   } : undefined;
 
-  const onResizeReset = isResizingEnabled ? (evt: React.MouseEvent) => {
+  const onResizeReset = resizable ? (evt: React.MouseEvent) => {
     columnProps.onResizeReset?.({ columnId }, evt);
   } : undefined;
 
-  const onDragStart = isDraggableEnabled ? (evt: React.DragEvent) => {
+  const onDragStart = draggable ? (evt: React.DragEvent) => {
     isDragging = true;
   } : undefined;
 
-  const onDragEnd = isDraggableEnabled ? (evt: React.DragEvent) => {
+  const onDragEnd = draggable ? (evt: React.DragEvent) => {
     isDragging = false;
   } : undefined;
 
   const bindRef = (elem: HTMLDivElement) => {
     elemRef?.(elem);
-    dropRef?.(dragRef(elem));
+    dropRef?.(dragRef?.(elem));
   };
 
-  const accessibilityProps: React.HTMLProps<HTMLElement> = isHeadingRow && isSortableEnabled ? {
+  const accessibilityProps: React.HTMLProps<HTMLElement> = isHeadingRow && sortable ? {
     role: "button",
     tabIndex: 0, // allow to focus heading column with [Tab]
     "aria-label": sortingOrder ? `Sorted by ${typeof title === "string" ? title : columnId}` : undefined,
@@ -242,12 +241,17 @@ export function TableColumn({ parentRow, ...columnProps }: TableColumnProps) {
     >
       {isHeadingRow && (
         <>
-          {isSortableEnabled && sortingArrowClass && <i className={sortingArrowClass}/>}
+          {sortable && sortingArrowClass && <i className={sortingArrowClass}/>}
           <div className={`${styles.title} ${classes.theadTitleClass ?? ""}`}>
             {title}
           </div>
-          {isResizingEnabled && <i className={styles.isResizable} onMouseDown={onResizeStart} onDoubleClick={onResizeReset}/>}
-          {isDraggableEnabled && <TableColumnDragIconSvg className={classes.draggableIcon}/>}
+          {resizable && (
+            <TableColumnDragIconSvg
+              className={classes.resizableColumn}
+              onMouseDown={onResizeStart}
+              onDoubleClick={onResizeReset}
+            />
+          )}
         </>
       )}
       {!isHeadingRow && (renderValue?.(parentRow, columnDataItem))}
@@ -255,10 +259,10 @@ export function TableColumn({ parentRow, ...columnProps }: TableColumnProps) {
   )
 }
 
-export function TableColumnDragIconSvg(props: React.PropsWithChildren & { className?: string }) {
-  const className = `${styles.dragIcon} ${props.className ?? ""}`;
+export function TableColumnDragIconSvg({ className, ...props }: React.PropsWithChildren & React.SVGAttributes<any>) {
+  const classNames = `${styles.resizeIcon} ${className ?? ""}`;
   return (
-    <svg className={className} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" className={classNames} {...props}>
       <path
         d="M11 18c0 1.1-.9 2-2 2s-2-.9-2-2s.9-2 2-2s2 .9 2 2zm-2-8c-1.1 0-2 .9-2 2s.9 2 2 2s2-.9 2-2s-.9-2-2-2zm0-6c-1.1 0-2 .9-2 2s.9 2 2 2s2-.9 2-2s-.9-2-2-2zm6 4c1.1 0 2-.9 2-2s-.9-2-2-2s-2 .9-2 2s.9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2s2-.9 2-2s-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2s2-.9 2-2s-.9-2-2-2z"></path>
     </svg>

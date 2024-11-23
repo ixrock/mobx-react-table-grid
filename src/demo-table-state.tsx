@@ -8,7 +8,7 @@ export type DemoTableState = CreatedTableState<ResourceStub>;
 
 export const demoTableState: DemoTableState = createTableState<ResourceStub>({
   tableId: "demo-table-state",
-  items: generateDemoData(10_000), /* generate 10K demo items */
+  items: generateDemoData(50_000),
   columns: [
     {
       id: "index",
