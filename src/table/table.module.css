@@ -97,7 +97,7 @@
     background: inherit;
     z-index: inherit;
 
-    &:not(.draggable) {
+    &:not(.isDraggable) {
       /* re-ordering column (d&d) is disabled */
       cursor: default;
     }
@@ -161,6 +161,7 @@
 
 /* re-ordering columns with d&d allowed */
 .isDraggable {
+  cursor: grab;
 }
 
 .isDragging {

@@ -20,16 +20,6 @@
   border-radius: 3px;
 }
 
-.checkbox {
-  padding: 0;
-
-  label {
-    display: flex;
-    height: 100%;
-    padding: var(--grid-spacing);
-  }
-}
-
 .indexColumn {
   text-align: center;
 }
@@ -125,22 +115,42 @@ input {
 }
 
 .selectedRows {
+  --spacing: 10px;
+
   display: flex;
   flex-direction: column;
   gap: .5em;
   position: absolute;
   right: 0;
   bottom: 0;
-  width: 30%;
-  max-height: 50%;
+  max-height: 33%;
+  padding: 0 var(--spacing);
   background: rgba(0, 0, 0, .85);
-  padding: 20px;
   z-index: 10;
   overflow: auto;
 
+  .selectedItem {
+    padding: var(--spacing);
+    padding-right: 0;
+
+    + & {
+      padding-top: 0;
+    }
+  }
+
   h2 {
     position: sticky;
+    left: 0;
     top: 0;
+    padding: var(--spacing);
+    color: black;
+    background-color: #ffffffcc;
+    z-index: 1;
+  }
+
+  button {
+    position: sticky;
+    bottom: 0;
     z-index: 1;
   }
 }

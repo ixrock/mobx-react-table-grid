@@ -3,7 +3,7 @@ import React from "react";
 import type { TableClassNames } from "./table";
 import type { TableDataRow } from "./table-row";
 import { useDrag, useDrop } from "react-dnd";
-import { tableColumnSortableType, tableTheadRowId } from "./table-constants";
+import { tableColumnSortableType, tableTheadRowId } from "./table-tokens";
 import debounce from "lodash/debounce";
 import throttle from "lodash/throttle";
 
@@ -89,25 +89,23 @@ export interface TableColumnProps extends TableDataColumn {
   elemRef?: React.RefCallback<HTMLDivElement>;
 }
 
-export function TableColumn(columnProps: TableColumnProps) {
+export function TableColumn({ parentRow, ...columnProps }: TableColumnProps) {
+  const isHeadingRow = parentRow.id === tableTheadRowId;
   const {
-    id: columnId,
-    className, title, style, parentRow, sortingOrder,
-    sortable = true,
-    draggable = true,
-    resizable = true,
+    id: columnId, className, title, style, sortingOrder,
+    sortable = isHeadingRow,
+    draggable = isHeadingRow,
+    resizable = isHeadingRow,
     minSize, classes = {}, elemRef, renderValue,
   } = columnProps;
   const columnDataItem = { ...columnProps, resizable, draggable, sortable };
 
-  const isHeadingRow = parentRow.id === tableTheadRowId;
   const isDraggableEnabled = isHeadingRow && draggable;
   const isSortableEnabled = isHeadingRow && sortable;
   const isResizingEnabled = isHeadingRow && resizable;
   const resizeStartOffset = { x: 0, y: 0 };
   let isDragging = false;
 
-  // FIXME: window tab crash on D&D
   const [dragMetrics, dragRef] = isDraggableEnabled ? useDrag({
     type: tableColumnSortableType,
     item: columnDataItem,
@@ -173,7 +171,7 @@ export function TableColumn(columnProps: TableColumnProps) {
     }
   }, 50) : undefined;
 
-  const onResizeStart = isResizingEnabled ? React.useCallback((evt: React.MouseEvent) => {
+  const onResizeStart = isResizingEnabled ? (evt: React.MouseEvent) => {
     evt.stopPropagation();
     evt.preventDefault();
 
@@ -208,7 +206,7 @@ export function TableColumn(columnProps: TableColumnProps) {
       document.body.removeEventListener("mousemove", onResizing);
       document.body.removeEventListener("mouseup", onResizeEnd);
     });
-  }, []) : undefined;
+  } : undefined;
 
   const onResizeReset = isResizingEnabled ? (evt: React.MouseEvent) => {
     columnProps.onResizeReset?.({ columnId }, evt);
@@ -252,7 +250,7 @@ export function TableColumn(columnProps: TableColumnProps) {
           {isDraggableEnabled && <TableColumnDragIconSvg className={classes.draggableIcon}/>}
         </>
       )}
-      {!isHeadingRow && (renderValue?.(parentRow, columnDataItem) ?? title)}
+      {!isHeadingRow && (renderValue?.(parentRow, columnDataItem))}
     </div>
   )
 }

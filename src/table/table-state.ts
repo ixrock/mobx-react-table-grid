@@ -13,12 +13,12 @@ export interface ResourceWithId {
 
 export interface CreateTableStateParams<ResourceItem = any> {
   tableId: string;
-  dataItems: IComputedValue<ResourceItem[]>;
+  items: ResourceItem[];
   /**
    * Columns definition as `Table.props.columns`.
    * Used to build `Table.props.rows` state.
    */
-  headingColumns: TableDataColumn<ResourceItem>[];
+  columns: TableDataColumn<ResourceItem>[];
   /**
    * Allows to customize row before processing by table (e.g. make `selectable`)
    */
@@ -36,8 +36,9 @@ export interface CreateTableStateParams<ResourceItem = any> {
 
 // TODO: split into multiple files for better readability
 export function createTableState<DataItem = any>(params: CreateTableStateParams<DataItem>) {
-  const { tableId, dataItems, customizeRows, getRowId, searchBox } = params;
+  const { tableId, items, customizeRows, getRowId, searchBox } = params;
 
+  const dataItems = observable.box(items, { deep: false });
   const searchText = searchBox ?? observable.box("", { name: "search-box" });
   const hiddenColumns = observable.set<TableColumnId>([], { name: "hidden-columns" });
   const selectedRowsId = observable.set<TableRowId>([], { name: "selected-rows" });
@@ -45,7 +46,7 @@ export function createTableState<DataItem = any>(params: CreateTableStateParams<
   const columnsOrder = observable.array<TableColumnId>([], { name: "columns-order" }); // columns could be reordered by d&d
   const columnSizes = observable.map<TableColumnId, string>([], { name: "columns-size" }); // columns could be resized
 
-  const headingColumns: TableDataColumn<DataItem>[] = params.headingColumns.map((headColumn) => {
+  const headingColumns: TableDataColumn<DataItem>[] = params.columns.map((headColumn) => {
     const dataColumn = {} as TableDataColumn<DataItem>;
     const columnDescriptorsInitial = Object.getOwnPropertyDescriptors<TableDataColumn<DataItem>>(headColumn);
     const columnDescriptorsEvents = Object.getOwnPropertyDescriptors<Partial<TableDataColumn<DataItem>>>({
@@ -218,6 +219,7 @@ export function createTableState<DataItem = any>(params: CreateTableStateParams<
     }
   });
 
+  // TODO: provide better names consistency + jsdoc
   return {
     tableId,
     searchText,

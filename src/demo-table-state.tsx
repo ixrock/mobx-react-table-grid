@@ -1,6 +1,5 @@
 import * as styles from "./demo.module.css";
 import React from "react";
-import { action, observable } from "mobx"
 import { CreatedTableState, createTableState } from "./table";
 import { Containers, Status } from "./demo-table-components";
 import { generateDemoData, ResourceColumnId, ResourceStub } from "./demo-data-generator";
@@ -9,49 +8,8 @@ export type DemoTableState = CreatedTableState<ResourceStub>;
 
 export const demoTableState: DemoTableState = createTableState<ResourceStub>({
   tableId: "demo-table-state",
-  dataItems: observable.box(generateDemoData(10_000), { deep: false }), /* generate 10K demo items */
-
-  // heading columns and data-accessors definitions
-  headingColumns: [
-    {
-      id: "checkbox",
-      size: "40px",
-      className: styles.checkbox,
-      resizable: false,
-      draggable: false,
-      sortable: false,
-      get title() {
-        return (
-          <label onClick={evt => evt.stopPropagation()}>
-            <input
-              type="checkbox"
-              checked={demoTableState.isSelectedAll.get()}
-              onChange={action(() => {
-                const { searchResultTableRowIds, selectedRowsId } = demoTableState;
-                const selectingRows = searchResultTableRowIds.get();
-                const allSelected = selectingRows.every(rowId => selectedRowsId.has(rowId));
-                if (!allSelected) {
-                  selectingRows.forEach(rowId => selectedRowsId.add(rowId));
-                } else {
-                  selectingRows.forEach(rowId => selectedRowsId.delete(rowId));
-                }
-              })}
-            />
-          </label>
-        );
-      },
-      renderValue: (row) => {
-        return (
-          <label onClick={evt => evt.stopPropagation()}>
-            <input
-              type="checkbox"
-              checked={demoTableState.selectedRowsId.has(row.id)}
-              onChange={(evt) => demoTableState.toggleRowSelection(row.id, evt.target.checked)}
-            />
-          </label>
-        )
-      },
-    },
+  items: generateDemoData(10_000), /* generate 10K demo items */
+  columns: [
     {
       id: "index",
       title: "#",
@@ -109,13 +67,6 @@ export const demoTableState: DemoTableState = createTableState<ResourceStub>({
     },
   ],
   customizeRows(row) {
-    return {
-      selectable: false, // checkboxes are used to select items
-      onSelect(row, evt) {
-        console.log('[DETAILS]:', row, evt);
-        // uncomment when `{selectable:true}` and remove `onChange()`-handler from checkbox (replace to mock)
-        // tableState.toggleRowSelection(row.id);
-      }
-    };
+    return { selectable: true };
   }
 });

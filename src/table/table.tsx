@@ -5,7 +5,7 @@ import { DndProvider } from "react-dnd";
 import { HTML5Backend } from "react-dnd-html5-backend";
 import { TableDataRow, TableRow } from "./table-row";
 import type { TableDataColumn } from "./table-column";
-import { tableHeaderRowId, tableTheadRowId } from "./table-constants";
+import { tableHeaderRowId, tableTheadRowId } from "./table-tokens";
 import { useVirtualization } from "./useVirtualization";
 
 export interface TableProps<DataItem = any> {
@@ -120,7 +120,9 @@ export const Table = observer((props: TableProps) => {
           <TableRow
             id={tableHeaderRowId}
             className={`${styles.header} ${classes.headerClass ?? ""}`}
-            columns={[{ id: "header", title: header }]}
+            columns={[{
+              id: "header", title: header, renderValue: () => header
+            }]}
             classes={classes}
             data={null}
           />

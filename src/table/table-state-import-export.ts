@@ -8,23 +8,21 @@ export interface ImportStateParams<DataItem> {
 
 export function importState<DataItem>({ tableState, storedState }: ImportStateParams<DataItem>) {
   if (!storedState) return;
-  const { columnsSizes = [], sortedColumns = [], columnsOrder, hiddenColumns = [], selectedRowsId = [], searchText = "" } = storedState;
+  const { columnsSizes = [], sortedColumns = [], columnsOrder, hiddenColumns = [], searchText = "" } = storedState;
 
   tableState.searchText.set(searchText);
   tableState.sortedColumns.replace(sortedColumns);
   tableState.columnsOrder.replace(columnsOrder);
   tableState.columnSizes.replace(columnsSizes);
   tableState.hiddenColumns.replace(hiddenColumns);
-  tableState.selectedRowsId.replace(selectedRowsId);
 }
 
 export function exportState<DataItem>(state: CreatedTableState<DataItem>) {
-  const { searchText, hiddenColumns, selectedRowsId, sortedColumns, columnSizes, columnsOrder } = state;
+  const { searchText, hiddenColumns, sortedColumns, columnSizes, columnsOrder } = state;
 
   return {
     searchText: searchText.get(),
     hiddenColumns: hiddenColumns.toJSON(),
-    selectedRowsId: selectedRowsId.toJSON(),
     sortedColumns: sortedColumns.toJSON(),
     columnsOrder: columnsOrder.toJSON(),
     columnsSizes: columnSizes.toJSON(),

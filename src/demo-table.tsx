@@ -10,13 +10,15 @@ export const DemoTable = observer((props: { store: DemoTableState }) => {
   const {
     tableId,
     headingColumns, headingColumnsReordered, hiddenColumns,
-    searchResultTableRows, searchText,
+    searchResultTableRows, searchText, tableRows,
     selectedRowsId, selectedTableRowsAll,
   } = props.store;
 
+  const totalItemsCount = new Intl.NumberFormat().format(tableRows.get().length);
+
   return (
     <>
-      <h1>Mobx-React CSS Grid Table (Demo)</h1>
+      <h1>Mobx-React CSS Grid Table (demo: {totalItemsCount} items)</h1>
       <input
         autoFocus
         placeholder="Search"
@@ -27,15 +29,14 @@ export const DemoTable = observer((props: { store: DemoTableState }) => {
       <div className={styles.hiddenColumns}>
         <h2>Columns hiding</h2>
         <div>
-          {headingColumns.map(column => {
-            if (column.id == "checkbox") return;
+          {headingColumns.map(({ id: columnId, title }) => {
+            const columnName = columnId === "index" ? "Index" : title;
+            const toggleVisibility = action(() => {
+              hiddenColumns.has(columnId) ? hiddenColumns.delete(columnId) : hiddenColumns.add(columnId)
+            });
             return (
-              <label key={column.id}>
-                <input
-                  type="checkbox"
-                  defaultChecked={!hiddenColumns.has(column.id)}
-                  onChange={action(() => hiddenColumns.has(column.id) ? hiddenColumns.delete(column.id) : hiddenColumns.add(column.id))}
-                /> {column.title}
+              <label key={columnId}>
+                <input type="checkbox" defaultChecked={!hiddenColumns.has(columnId)} onChange={toggleVisibility}/> {columnName}
               </label>
             )
           })}
@@ -46,7 +47,8 @@ export const DemoTable = observer((props: { store: DemoTableState }) => {
         <div className={styles.selectedRows}>
           <h2>Selected names ({selectedRowsId.size})</h2>
           {selectedTableRowsAll.get().map(row => {
-            const title = row.columns.find(row => row.id === ResourceColumnId.name).title;
+            const column = row.columns.find(row => row.id === ResourceColumnId.name);
+            const title = column.renderValue(row, column);
             return (
               <div className={styles.selectedItem} key={String(row.id)}>
                 {title}
