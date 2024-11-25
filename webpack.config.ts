@@ -19,91 +19,94 @@ const externals = Object.keys(packageJson.peerDependencies)
   }, {})
 ;
 
-const config: webpack.Configuration = {
-  mode: isDevelopment ? 'development' : 'production',
-  entry: isDevelopment ? {
-    demo: './src/demo.tsx',
-  } : {
-    index: path.resolve(__dirname, './src/table/index.ts'),
-  },
-  devtool: isDevelopment ? "source-map" : undefined,
-  externals: isDevelopment ? [] : externals, // exclude bundling with lib "react", "mobx", etc.
-  output: {
-    path: path.resolve(__dirname, isDevelopment ? "dev" : "dist"),
-    filename: '[name].js',
-    libraryTarget: "this",
-    library: {
-      type: "commonjs-module",
-    }
-  },
-  resolve: {
-    extensions: ['.ts', '.tsx', '.js'],
-  },
-  optimization: {
-    minimize: !isDevelopment,
-  },
-  experiments: {
-    topLevelAwait: true,
-  },
-  module: {
-    rules: [
-      {
-        test: /\.tsx?$/,
-        exclude: /node_modules/,
-        use: [
-          {
-            loader: 'ts-loader',
-            options: {
-              transpileOnly: true,
-              compilerOptions: {
+export default function webpackConfig(env: { demo?: boolean } = {}): webpack.Configuration {
+  const demoEntry = {
+    demo: path.resolve(__dirname, './src/demo.tsx')
+  };
+
+  return {
+    mode: isDevelopment ? 'development' : 'production',
+    entry: isDevelopment ? demoEntry : {
+      ...(env.demo ? demoEntry : {}), // demo build deployment
+      index: path.resolve(__dirname, './src/table/index.ts'),
+    },
+    devtool: isDevelopment ? "source-map" : undefined,
+    externals: isDevelopment ? [] : externals, // exclude bundling with lib "react", "mobx", etc.
+    output: {
+      path: path.resolve(__dirname, isDevelopment ? "dev" : "dist"),
+      filename: '[name].js',
+      libraryTarget: "this",
+      library: {
+        type: "commonjs-module",
+      }
+    },
+    resolve: {
+      extensions: ['.ts', '.tsx', '.js'],
+    },
+    optimization: {
+      minimize: !isDevelopment,
+    },
+    experiments: {
+      topLevelAwait: true,
+    },
+    module: {
+      rules: [
+        {
+          test: /\.tsx?$/,
+          exclude: /node_modules/,
+          use: [
+            {
+              loader: 'ts-loader',
+              options: {
+                transpileOnly: true,
+                compilerOptions: {
+                  sourceMap: isDevelopment,
+                },
+              },
+            },
+          ],
+        },
+        {
+          test: /\.?css$/,
+          use: [
+            MiniCssExtractPlugin.loader,
+            {
+              loader: 'css-loader',
+              options: {
                 sourceMap: isDevelopment,
+                modules: {
+                  auto: /\.module\./i, // https://github.com/webpack-contrib/css-loader#auto
+                  mode: "local", // :local(.selector) by default
+                  localIdentName: '[name]-[local]-[hash:base64:5]'
+                },
               },
             },
-          },
-        ],
-      },
-      {
-        test: /\.?css$/,
-        use: [
-          MiniCssExtractPlugin.loader,
-          {
-            loader: 'css-loader',
-            options: {
-              sourceMap: isDevelopment,
-              modules: {
-                auto: /\.module\./i, // https://github.com/webpack-contrib/css-loader#auto
-                mode: "local", // :local(.selector) by default
-                localIdentName: '[name]-[local]-[hash:base64:5]'
-              },
-            },
-          },
-        ],
-      },
-      {
-        test: /\.(png|jpe?g|gif|svg)$/i,
-        type: 'asset',
-      },
-    ],
-  },
-  plugins: [
-    ...(isDevelopment ? [
-      new ForkTsCheckerWebpackPlugin(),
-      new HtmlWebpackPlugin({
-        template: path.resolve(__dirname, 'public/index.html'),
-        filename: 'index.html',
-        inject: true
+          ],
+        },
+        {
+          test: /\.(png|jpe?g|gif|svg)$/i,
+          type: 'asset',
+        },
+      ],
+    },
+    plugins: [
+      ...(isDevelopment ? [
+        new ForkTsCheckerWebpackPlugin(),
+        new HtmlWebpackPlugin({
+          template: path.resolve(__dirname, 'public/index.html'),
+          filename: 'index.html',
+          inject: true
+        }),
+      ] : []),
+
+      new MiniCssExtractPlugin(),
+      new CopyWebpackPlugin({
+        patterns: [
+          { from: "LICENSE" },
+          { from: "README.md" },
+          { from: "package.json" },
+        ]
       }),
-    ] : []),
-
-    new MiniCssExtractPlugin(),
-    new CopyWebpackPlugin({
-      patterns: [
-        { from: "LICENSE" },
-        { from: "README.md" },
-        { from: "package.json" },
-      ]
-    }),
-  ],
-};
-
-export default config;
+    ],
+  }
+}

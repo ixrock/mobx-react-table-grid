@@ -7,6 +7,7 @@
   "scripts": {
     "dev": "webpack serve --mode development --port 9001 --client-overlay --open",
     "build": "npm run build:clean && npm run build-lib && npm run build-types",
+    "build-demo": "npm run build-lib -- --env demo",
     "build-lib": "NODE_ENV=production webpack --mode production",
     "build-types": "tsc --project tsconfig-build-types.json",
     "build:clean": "rimraf ./dist/",

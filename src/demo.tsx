@@ -4,7 +4,6 @@ import { persistTableState } from "./table";
 import { DemoTable } from "./demo-table";
 import { demoTableState } from "./demo-table-state";
 
-// TODO: deploy demo to vercel
 const appRootElem = document.getElementById('app');
 
 // Import and export data changes to local-storage
