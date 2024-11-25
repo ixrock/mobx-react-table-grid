@@ -1,4 +1,4 @@
-Easy to use table component powered by CSS-grid & React/MobX 
+Powerful, simple, fast and API-friendly CSS-grid component (based on React/MobX) 
 ----
 
 ## Install | [npm](https://www.npmjs.com/package/mobx-react-table-grid)
@@ -9,15 +9,15 @@ npm install mobx-react-table-grid
 ## Benefits
 
 - simple API _(just use as data input plain-objects and data-getters, mostly see `TableDataColumn` and `TableDataRow` interfaces)_
-- table rows virtualization _(handle large amount of items, e.g. you can handle 10k pods from k8s, see the demo with generated data)_
+- table rows virtualization _(you can easily handle 50k+ items (e.g. k8s resources) without slowness in UI while having access to data)_
 - most of the layout done via `display: grid` with some help of css-variables _(works really fast!)_ 
 - multi-columns sorting _(powered by `lodash/orderBy`)_ 
 - reordering columns: drag the heading column _(powered by `react-dnd`)_ 
 - filtering columns _(show/hide/search)_ 
-- resizing columns + reset to default (show all min-content)
-- rows search support (see demo)
-- rows selection state management (see demo)
-- import/export table-state to external storage (e.g. `window.localStorage`, see demo)
+- resizing columns + reset to default (css-grid min-content)
+- lightweight rows search implementation (see `demo.tsx`)
+- rows/data selection state management (see `demo.tsx`)
+- import/export grid-state to external storage (e.g. `window.localStorage`, see `demo.tsx`)
 - customize column sizes via css-variables `--grid-col-size-${columnId}` _(see usage in `demo.module.css`)_
 - `mobx` observability for grid state management under the hood
 
