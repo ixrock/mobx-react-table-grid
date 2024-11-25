@@ -13,14 +13,12 @@
     "build:clean": "rimraf ./dist/",
     "release-pack": "npm run build && npm pack ./dist",
     "release-publish": "npm run build && npm publish ./dist",
-    "update-deps": "npx npm-check-updates -u && npx npm-check-updates -u --dep peer"
+    "update-deps": "npx npm-check-updates -u && npx npm-check-updates -u --dep peer",
+    "demo-serve": "cd ./dist && python3 -m http.server 8000"
   },
   "main": "index.js",
   "types": "types/index.d.ts",
-  "files": [
-    "types",
-    "*.*"
-  ],
+  "files": ["types", "*.*"],
   "repository": {
     "type": "git",
     "url": "git+https://github.com/ixrock/mobx-react-table-grid.git"

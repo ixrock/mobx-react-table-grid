@@ -38,7 +38,7 @@ export default function webpackConfig(env: { demo?: boolean } = {}): webpack.Con
       index: path.resolve(__dirname, './src/table/index.ts'),
     },
     devtool: isDevelopment ? "source-map" : undefined,
-    externals: isDevelopment ? [] : externals, // exclude bundling with lib "react", "mobx", etc.
+    externals: (isDevelopment || isDemoBuild) ? [] : externals, // exclude bundling with lib "react", "mobx", etc.
     output: {
       path: path.resolve(__dirname, isDevelopment ? "dev" : "dist"),
       filename: '[name].js',
