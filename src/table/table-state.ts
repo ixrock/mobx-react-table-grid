@@ -23,6 +23,7 @@ export interface CreateTableStateParams<ResourceItem extends ResourceWithId = {}
    * Allows to customize row before processing by table (e.g. make `selectable`)
    */
   customizeRows?: (row: TableDataRow<ResourceItem>) => Partial<TableDataRow<ResourceItem>>;
+  customSearchResults?: (searchText: string, rows: TableDataRow<ResourceItem>[]) => TableDataRow<ResourceItem>[];
   /**
    * Provide uniq ID for data items
    */
@@ -35,7 +36,7 @@ export interface CreateTableStateParams<ResourceItem extends ResourceWithId = {}
 }
 
 export function createTableState<DataItem extends ResourceWithId = {}>(params: CreateTableStateParams<DataItem>) {
-  const { tableId, items, customizeRows, getRowId, searchBox } = params;
+  const { tableId, items, customizeRows, getRowId, searchBox, customSearchResults, columns: initialColumns } = params;
 
   const getResourceId = (resource: DataItem): TableRowId | undefined => {
     return getRowId?.(resource) ?? resource.id ?? resource.getId?.();
@@ -52,7 +53,7 @@ export function createTableState<DataItem extends ResourceWithId = {}>(params: C
   const columnsOrder = observable.array<TableColumnId>([], { name: "columns-order" }); // columns could be reordered by d&d
   const columnSizes = observable.map<TableColumnId, string>([], { name: "columns-size" }); // columns could be resized
 
-  const headingColumns: TableDataColumn<DataItem>[] = params.columns.map((headColumn) => {
+  const headingColumns: TableDataColumn<DataItem>[] = initialColumns.map((headColumn) => {
     const dataColumn = {} as TableDataColumn<DataItem>;
     const columnDescriptorsInitial = Object.getOwnPropertyDescriptors<TableDataColumn<DataItem>>(headColumn);
     const columnDescriptorsEvents = Object.getOwnPropertyDescriptors<Partial<TableDataColumn<DataItem>>>({
@@ -163,6 +164,9 @@ export function createTableState<DataItem extends ResourceWithId = {}>(params: C
 
   const searchResultTableRows = computed<TableDataRow<DataItem>[]>(() => {
     const search = searchText.get();
+    if (customSearchResults) {
+      return customSearchResults(search, sortedTableRows.get());
+    }
     return sortedTableRows.get().filter((row) => {
       return row.columns.some(col => {
         const columnContent = col.searchValue?.(row, col) ?? col.renderValue?.(row, col);

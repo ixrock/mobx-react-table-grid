@@ -224,4 +224,8 @@ code {
   font-size: small;
   font-style: italic;
   color: white;
+
+  &:after {
+    content: " (copied)";
+  }
 }
