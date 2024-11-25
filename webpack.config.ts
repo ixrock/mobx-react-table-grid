@@ -20,14 +20,21 @@ const externals = Object.keys(packageJson.peerDependencies)
 ;
 
 export default function webpackConfig(env: { demo?: boolean } = {}): webpack.Configuration {
+  const isDemoBuild = Boolean(env.demo);
   const demoEntry = {
     demo: path.resolve(__dirname, './src/demo.tsx')
   };
 
+  const htmlWebpackPlugin = new HtmlWebpackPlugin({
+    template: path.resolve(__dirname, 'public/index.html'),
+    filename: 'index.html',
+    inject: true
+  });
+
   return {
     mode: isDevelopment ? 'development' : 'production',
     entry: isDevelopment ? demoEntry : {
-      ...(env.demo ? demoEntry : {}), // demo build deployment
+      ...(isDemoBuild ? demoEntry : {}), // for deployment in vercel
       index: path.resolve(__dirname, './src/table/index.ts'),
     },
     devtool: isDevelopment ? "source-map" : undefined,
@@ -91,12 +98,12 @@ export default function webpackConfig(env: { demo?: boolean } = {}): webpack.Con
     },
     plugins: [
       ...(isDevelopment ? [
+        htmlWebpackPlugin,
         new ForkTsCheckerWebpackPlugin(),
-        new HtmlWebpackPlugin({
-          template: path.resolve(__dirname, 'public/index.html'),
-          filename: 'index.html',
-          inject: true
-        }),
+      ] : []),
+
+      ...(isDemoBuild ? [
+        htmlWebpackPlugin
       ] : []),
 
       new MiniCssExtractPlugin(),
