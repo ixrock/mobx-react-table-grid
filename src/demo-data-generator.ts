@@ -1,6 +1,7 @@
 import Fakerator from "fakerator";
+import type { ResourceWithId } from "./table";
 
-export type ResourceStub = ReturnType<typeof generateDemoData>[0];
+export type ResourceStub = ReturnType<typeof generateDemoData>[0] & ResourceWithId;
 
 export const enum ResourceColumnId {
   name = "name",

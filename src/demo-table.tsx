@@ -9,11 +9,11 @@ export const DemoTable = observer((props: { store: DemoTableState }) => {
   const {
     tableId,
     headingColumns, headingColumnsReordered, hiddenColumns,
-    searchResultTableRows, searchText, tableRows,
+    searchResultTableRows, searchText, tableRowsMap,
     selectedRowsId, selectedTableRowsAll,
   } = props.store;
 
-  const totalItemsCount = new Intl.NumberFormat().format(tableRows.get().length);
+  const totalItemsCount = new Intl.NumberFormat().format(tableRowsMap.get().size);
 
   return (
     <>
@@ -28,7 +28,7 @@ export const DemoTable = observer((props: { store: DemoTableState }) => {
       <div className={styles.hiddenColumns}>
         <h2>Columns hiding</h2>
         <div>
-          {headingColumns.map(({ id: columnId, title }) => {
+          {Object.values(headingColumns).map(({ id: columnId, title }) => {
             const columnName = columnId === "index" ? "Index" : title;
             const toggleVisibility = action(() => {
               hiddenColumns.has(columnId) ? hiddenColumns.delete(columnId) : hiddenColumns.add(columnId)

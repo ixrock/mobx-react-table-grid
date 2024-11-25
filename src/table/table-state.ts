@@ -11,7 +11,7 @@ export interface ResourceWithId {
   getId?(): TableRowId;
 }
 
-export interface CreateTableStateParams<ResourceItem = any> {
+export interface CreateTableStateParams<ResourceItem extends ResourceWithId = {}> {
   tableId: string;
   items: ResourceItem[];
   /**
@@ -34,11 +34,17 @@ export interface CreateTableStateParams<ResourceItem = any> {
   searchBox?: IComputedValue<string> | IObservableValue<string>;
 }
 
-// TODO: split into multiple files for better readability
-export function createTableState<DataItem = any>(params: CreateTableStateParams<DataItem>) {
+export function createTableState<DataItem extends ResourceWithId = {}>(params: CreateTableStateParams<DataItem>) {
   const { tableId, items, customizeRows, getRowId, searchBox } = params;
 
-  const dataItems = observable.box(items, { deep: false });
+  const getResourceId = (resource: DataItem): TableRowId | undefined => {
+    return getRowId?.(resource) ?? resource.id ?? resource.getId?.();
+  }
+
+  const dataItems = computed(() => {
+    return new Map(items.map(item => [getResourceId(item), item]));
+  });
+
   const searchText = searchBox ?? observable.box("", { name: "search-box" });
   const hiddenColumns = observable.set<TableColumnId>([], { name: "hidden-columns" });
   const selectedRowsId = observable.set<TableRowId>([], { name: "selected-rows" });
@@ -105,42 +111,38 @@ export function createTableState<DataItem = any>(params: CreateTableStateParams<
     name: "table-columns"
   });
 
-  const getRowIdFromDataItem = (resource: DataItem & ResourceWithId, index: number) => {
-    return getRowId?.(resource) ?? resource.id ?? resource.getId?.() ?? String(index);
-  };
+  const tableRowsMap = computed(() => {
+    return new Map<TableRowId, TableDataRow<DataItem>>(
+      [...dataItems.get().values()].map((resource, resourceIndex) => {
+        let row: TableDataRow<DataItem> = {
+          get id() {
+            return getResourceId(resource);
+          },
+          index: resourceIndex,
+          data: resource,
+          columns: headingColumnsReordered.get(),
+          get selected() {
+            return selectedRowsId.has(row.id);
+          },
+          onSelect: action((row: TableDataRow<DataItem>, evt: React.MouseEvent) => {
+            if (row.selectable) {
+              if (selectedRowsId.has(row.id)) selectedRowsId.delete(row.id);
+              else selectedRowsId.add(row.id);
+            }
+            customizedRow?.onSelect?.(row, evt);
+          })
+        };
 
-  const tableRows = computed<TableDataRow<DataItem>[]>(() => {
-    return dataItems.get().map((resource, resourceIndex) => {
-      let row: TableDataRow<DataItem> = {
-        get id() {
-          return getRowIdFromDataItem(resource, resourceIndex);
-        },
-        index: resourceIndex,
-        data: resource,
-        columns: headingColumnsReordered.get(),
-        get selected() {
-          return selectedRowsId.has(row.id);
-        },
-        onSelect: action((row: TableDataRow<DataItem>, evt: React.MouseEvent) => {
-          if (row.selectable) {
-            if (selectedRowsId.has(row.id)) selectedRowsId.delete(row.id);
-            else selectedRowsId.add(row.id);
-          }
-          customizedRow?.onSelect?.(row, evt);
-        })
-      };
+        // customize every data-row object with saving initial field descriptors (e.g. getters/setters would work as expected)
+        const customizedRow = customizeRows?.(row);
+        if (customizedRow) {
+          const { onSelect, ...rowOverrides } = customizedRow;
+          row = Object.defineProperties(row, Object.getOwnPropertyDescriptors(rowOverrides));
+        }
 
-      // customize every data-row object with saving initial field descriptors (e.g. getters/setters would work as expected)
-      const customizedRow = customizeRows?.(row);
-      if (customizedRow) {
-        const { onSelect, ...rowOverrides } = customizedRow;
-        row = Object.defineProperties(row, Object.getOwnPropertyDescriptors(rowOverrides));
-      }
-
-      return row;
-    });
-  }, {
-    name: "table-rows"
+        return [row.id, row];
+      })
+    );
   });
 
   const sortedTableRows = computed<TableDataRow<DataItem>[]>(() => {
@@ -154,7 +156,7 @@ export function createTableState<DataItem = any>(params: CreateTableStateParams<
       }
     });
 
-    return orderBy(tableRows.get(), sortingCallbacks, sortingOrders);
+    return orderBy([...tableRowsMap.get().values()], sortingCallbacks, sortingOrders);
   }, {
     name: "sorted-table-rows"
   });
@@ -180,7 +182,7 @@ export function createTableState<DataItem = any>(params: CreateTableStateParams<
   });
 
   const selectedTableRowsAll = computed<TableDataRow<DataItem>[]>(() => {
-    return tableRows.get().filter(row => selectedRowsId.has(row.id));
+    return [...tableRowsMap.get().values()].filter(row => selectedRowsId.has(row.id));
   }, {
     name: "selected-table-rows-all",
   });
@@ -191,9 +193,7 @@ export function createTableState<DataItem = any>(params: CreateTableStateParams<
     name: "selected-table-rows-filtered",
   });
 
-  const tableRowIds = computed<TableRowId[]>(() => {
-    return dataItems.get().map((dataItem, index) => getRowIdFromDataItem(dataItem, index));
-  }, {
+  const tableRowIds = computed<TableRowId[]>(() => Object.keys(dataItems), {
     name: "table-rows-id",
   });
 
@@ -230,7 +230,7 @@ export function createTableState<DataItem = any>(params: CreateTableStateParams<
     headingColumns,
     headingColumnsReordered,
     tableRowIds,
-    tableRows,
+    tableRowsMap,
     sortedTableRows,
     searchResultTableRows,
     searchResultTableRowIds,

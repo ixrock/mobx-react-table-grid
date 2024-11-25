@@ -1,5 +1,3 @@
-// TODO: split into multiple files for better readability
-
 import * as styles from "./table.module.css";
 import React from "react";
 import type { TableClassNames } from "./table";
