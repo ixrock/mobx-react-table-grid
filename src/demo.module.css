@@ -192,3 +192,36 @@ input {
   padding: .35em;
   margin: 0 10%;
 }
+
+.githubIcon {
+  filter: invert(100%);
+  opacity: .85;
+
+  &:hover {
+    opacity: 1;
+  }
+}
+
+.install {
+  padding: 10px;
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+  justify-content: center;
+}
+
+code {
+  opacity: .75;
+  transition: 150ms opacity;
+  cursor: pointer;
+
+  &:hover {
+    opacity: 1;
+  }
+}
+
+.copied {
+  font-size: small;
+  font-style: italic;
+  color: white;
+}

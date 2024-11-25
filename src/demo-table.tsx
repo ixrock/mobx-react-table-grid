@@ -4,6 +4,7 @@ import { action } from "mobx"
 import { observer } from "mobx-react"
 import { Table } from "./table";
 import { DemoTableState } from "./demo-table-state";
+import GithubIcon from "../public/github.svg";
 
 export const DemoTable = observer((props: { store: DemoTableState }) => {
   const {
@@ -14,10 +15,32 @@ export const DemoTable = observer((props: { store: DemoTableState }) => {
   } = props.store;
 
   const totalItemsCount = new Intl.NumberFormat().format(tableRowsMap.get().size);
+  const [copied, setCopied] = React.useState(false);
+
+  const copyInstallToBufferFromEvent = async (event: React.MouseEvent) => {
+    try {
+      await navigator.clipboard.writeText((event.target as HTMLHtmlElement).innerText);
+      setCopied(true);
+    } catch (err) {
+      window.alert(`Could not copy to clipboard: ${err}`);
+    } finally {
+      setTimeout(() => setCopied(false), 2500);
+    }
+  };
 
   return (
     <>
       <h1>Mobx-React CSS Grid Table (demo: {totalItemsCount} items)</h1>
+      <div className={styles.install}>
+        <h2>Install via NPM:</h2>
+        <div>
+          <code onClick={copyInstallToBufferFromEvent}> npm i mobx-react-table-grid</code>
+          {copied && <span className={styles.copied}> (copied)</span>}
+        </div>
+        <a href="https://github.com/ixrock/mobx-react-table-grid" target="_blank" className={styles.githubIcon}>
+          <img src={GithubIcon} width={20} height={20} alt="Github sources"/>
+        </a>
+      </div>
       <input
         autoFocus
         placeholder="Search"

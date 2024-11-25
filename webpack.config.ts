@@ -94,6 +94,10 @@ export default function webpackConfig(env: { demo?: boolean } = {}): webpack.Con
           test: /\.(png|jpe?g|gif|svg)$/i,
           type: 'asset',
         },
+        {
+          test: /\.svg$/,
+          type: "asset/inline" // data:image/svg+xml;base64,...
+        },
       ],
     },
     plugins: [
