@@ -1,6 +1,5 @@
 import React, { useLayoutEffect, useState } from "react";
 import type { TableDataRow } from "./index";
-import throttle from "lodash/throttle";
 
 export interface VirtualizationOptions<DataItem = any> {
   parentElemRef: React.RefObject<HTMLElement>;
@@ -52,8 +51,8 @@ export function useVirtualization<D>(options: VirtualizationOptions<D>) {
     setMaxScrollHeight(rows.length * rowSize);
     setViewportSize(rootElem.offsetHeight);
 
-    const onScroll = throttle(() => {
-      window.requestIdleCallback(() => {
+    const onScroll = () => {
+      window.requestAnimationFrame(() => {
         const { scrollTop } = rootElem;
         const scrolledRowsInfo = getScrolledRowsInfo({
           rows,
@@ -63,7 +62,7 @@ export function useVirtualization<D>(options: VirtualizationOptions<D>) {
         setScrollPos(scrollTop);
         setScrolledRowsCount(scrolledRowsInfo.count);
       });
-    }, 50);
+    };
 
     const resizeObserver = new ResizeObserver(([entry]) => {
       const viewportSize = Math.round(entry.contentRect.height);
